@@ -74,7 +74,7 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 0, alignItems: 'stretch' }}>
+        <div className="period-chart-wrap" style={{ display: 'flex', gap: 0, alignItems: 'stretch' }}>
           <div style={{ flex: 2, minWidth: 0 }}>
             <PeriodChart period={period} year={year} month={month} transactions={transactions} />
           </div>

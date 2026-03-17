@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import siIcon from './si.png'
 import DashboardPage from './pages/DashboardPage'
@@ -15,13 +16,21 @@ const NAV_ITEMS = [
 ]
 
 export default function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const closeSidebar = () => setSidebarOpen(false)
+
   return (
     <div className="app-layout">
+      {/* 모바일 오버레이 */}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar} />}
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-logo">
           <img src={siIcon} alt="logo" style={{ width: 35, height: 35, borderRadius: 6, objectFit: 'cover' }} />
           <span className="logo-text">가계부</span>
+          <button className="sidebar-close-btn" onClick={closeSidebar}>✕</button>
         </div>
 
         <nav className="sidebar-nav">
@@ -29,7 +38,7 @@ export default function App() {
           <ul>
             {NAV_ITEMS.map((item) => (
               <li key={item.to}>
-                <NavLink to={item.to} end={item.end} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <NavLink to={item.to} end={item.end} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={closeSidebar}>
                   <span className="nav-icon">{item.icon}</span>
                   <span>{item.label}</span>
                 </NavLink>
@@ -42,6 +51,7 @@ export default function App() {
       {/* Main */}
       <div className="main-wrap">
         <header className="topbar">
+          <button className="hamburger-btn" onClick={() => setSidebarOpen(true)}>☰</button>
           <div className="topbar-title">
             <Routes>
               <Route path="/" element={<><span className="page-title">대시보드</span><span className="page-sub">이번 달 수입·지출을 한눈에 확인하세요.</span></>} />
