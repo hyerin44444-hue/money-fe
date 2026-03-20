@@ -76,7 +76,7 @@ export default function BudgetPage() {
                   />
                   <span className="budget-unit">원</span>
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div className="budget-row-actions">
                   <button
                     className="btn primary"
                     style={{ padding: '4px 12px', fontSize: 13 }}

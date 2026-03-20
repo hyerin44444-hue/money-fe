@@ -39,56 +39,34 @@ export default function MonthlyOverview({ year, currentMonth }) {
   return (
     <div className="card" style={{ padding: '20px 24px', marginBottom: 16 }}>
       <h2 style={{ margin: '0 0 16px', fontSize: 16, color: 'var(--text-primary)' }}>{year}년 월별 현황</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {[rows.slice(0, 6), rows.slice(6)].map((half, hi) => (
-        <div key={hi} style={{ display: 'flex', gap: 8 }}>
-        {half.map((r) => {
+      <div className="monthly-grid">
+        {rows.map((r) => {
           const isCurrentMonth = r.month === currentMonth && year === today.year()
           const hasData = r.income > 0 || r.expense > 0 || r.savings > 0
           return (
             <div
               key={r.month}
-              style={{
-                flex: 1,
-                border: `1.5px solid ${isCurrentMonth ? 'var(--accent)' : 'var(--border)'}`,
-                borderRadius: 10,
-                padding: '12px 14px',
-                background: isCurrentMonth ? '#fff5f2' : hasData ? '#fff' : '#fafafa',
-              }}
+              className={`monthly-cell${isCurrentMonth ? ' monthly-cell-current' : ''}`}
+              style={{ background: isCurrentMonth ? '#fff5f2' : hasData ? '#fff' : '#fafafa' }}
             >
-              <p style={{
-                margin: '0 0 10px',
-                fontSize: 13,
-                fontWeight: 700,
-                color: isCurrentMonth ? 'var(--accent)' : 'var(--text-secondary)',
-              }}>
-                {r.month}월
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12 }}>
-                  <span style={{ color: 'var(--text-muted)' }}>수입</span>
-                  <span style={{ fontWeight: 600, color: r.income > 0 ? 'var(--green)' : 'var(--text-muted)' }}>
-                    {fmt(r.income)}
-                  </span>
+              <p className="monthly-cell-month">{r.month}월</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div className="monthly-cell-row">
+                  <span>수입</span>
+                  <span style={{ color: r.income > 0 ? 'var(--green)' : 'var(--text-muted)' }}>{fmt(r.income)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12 }}>
-                  <span style={{ color: 'var(--text-muted)' }}>지출</span>
-                  <span style={{ fontWeight: 600, color: r.expense > 0 ? 'var(--red)' : 'var(--text-muted)' }}>
-                    {fmt(r.expense)}
-                  </span>
+                <div className="monthly-cell-row">
+                  <span>지출</span>
+                  <span style={{ color: r.expense > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{fmt(r.expense)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12 }}>
-                  <span style={{ color: 'var(--text-muted)' }}>적금</span>
-                  <span style={{ fontWeight: 600, color: r.savings > 0 ? '#4f86f7' : 'var(--text-muted)' }}>
-                    {fmt(r.savings)}
-                  </span>
+                <div className="monthly-cell-row">
+                  <span>적금</span>
+                  <span style={{ color: r.savings > 0 ? '#4f86f7' : 'var(--text-muted)' }}>{fmt(r.savings)}</span>
                 </div>
               </div>
             </div>
           )
         })}
-        </div>
-      ))}
       </div>
     </div>
   )

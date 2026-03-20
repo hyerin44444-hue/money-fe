@@ -38,21 +38,15 @@ export default function BudgetStatus({ transactions }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {items.map((item) => (
           <div key={item.category}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{item.category}</span>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 12 }}>
-                <span style={{ color: 'var(--text-secondary)' }}>
+            <div className="budget-status-header">
+              <span className="budget-status-name">{item.category}</span>
+              <div className="budget-status-info">
+                <span className="budget-status-amounts">
                   {item.spent.toLocaleString()}원
                   <span style={{ color: 'var(--text-muted)', margin: '0 3px' }}>/</span>
                   {item.budget.toLocaleString()}원
                 </span>
-                <span style={{
-                  color: item.remaining < 0 ? 'var(--red)' : 'var(--green)',
-                  fontWeight: 600,
-                  background: item.remaining < 0 ? '#fef2f2' : '#f0fdf4',
-                  padding: '2px 8px',
-                  borderRadius: 99,
-                }}>
+                <span className={`budget-status-badge ${item.remaining < 0 ? 'over' : 'remain'}`}>
                   {item.remaining < 0
                     ? `초과 ${Math.abs(item.remaining).toLocaleString()}원`
                     : `잔여 ${item.remaining.toLocaleString()}원`}

@@ -58,7 +58,7 @@ export default function DashboardPage() {
       <BudgetStatus transactions={transactions} />
 
       {/* 기간별 수입/지출 차트 */}
-      <div className="card" style={{ marginTop: 16, padding: '20px 24px' }}>
+      <div className="card" style={{ marginTop: 16, padding: '20px 24px', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h2 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>수입 / 지출 현황</h2>
           <div style={{ display: 'flex', gap: 4 }}>

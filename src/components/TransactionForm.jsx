@@ -70,7 +70,7 @@ export default function TransactionForm({ categories, onSubmit, onClose, initial
               type="number"
               value={form.amount}
               onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
-              min="0" step="100" required placeholder="0"
+              min="0" step="1" required placeholder="0"
             />
           </div>
           <div className="form-row">

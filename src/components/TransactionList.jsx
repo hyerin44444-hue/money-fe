@@ -11,6 +11,7 @@ export default function TransactionList({ transactions, onEdit, onDelete, fixedN
 
   return (
     <div className="card">
+      <div className="tx-table-wrap">
       <table className="tx-table">
         <thead>
           <tr>
@@ -28,6 +29,7 @@ export default function TransactionList({ transactions, onEdit, onDelete, fixedN
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

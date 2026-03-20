@@ -68,7 +68,7 @@ export default function HistoryPage() {
 
       {/* 필터 + 버튼 */}
       <div className="filter-bar">
-        <div style={{ width: 130 }}>
+        <div className="filter-select-wrap">
           <Select
             value={filterType}
             onChange={setFilterType}
@@ -76,7 +76,7 @@ export default function HistoryPage() {
             placeholder="전체"
           />
         </div>
-        <div style={{ width: 160 }}>
+        <div className="filter-select-wrap">
           <Select
             value={filterCategory}
             onChange={setFilterCategory}
@@ -84,8 +84,8 @@ export default function HistoryPage() {
             placeholder="전체 카테고리"
           />
         </div>
-        <span className="count">{filtered.length}건</span>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+        <div className="filter-actions">
+          <span className="count">{filtered.length}건</span>
           <button className="btn secondary" onClick={handleApplyFixed}>📌 고정비 반영</button>
           <button className="btn primary" onClick={() => { setEditTarget(null); setShowForm(true) }}>+ 추가</button>
         </div>
