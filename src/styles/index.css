@@ -43,11 +43,17 @@ button { cursor: pointer; font-family: inherit; }
 /* ────────────────────────────────────────────
    Layout
 ──────────────────────────────────────────── */
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
 .app-layout {
   display: flex;
   min-height: 100vh;
   overflow-x: hidden;
   max-width: 100vw;
+  width: 100%;
 }
 
 /* ────────────────────────────────────────────
@@ -302,6 +308,9 @@ button { cursor: pointer; font-family: inherit; }
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   overflow: hidden;
+}
+.card-section {
+  padding: 20px 24px;
 }
 
 .tx-table {
@@ -1266,16 +1275,37 @@ button { cursor: pointer; font-family: inherit; }
   }
   .page { gap: 12px; overflow-x: hidden !important; width: 100%; }
 
+  /* ── #root 및 최상위 ── */
+  #root { overflow-x: hidden !important; max-width: 100vw !important; }
+
   /* ── 모든 카드/컨테이너 ── */
   .card,
   .chart-container,
   .parser-card,
-  .settings-card,
   .savings-card,
   .calendar-card {
     overflow: hidden !important;
     max-width: 100% !important;
     width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  /* settings-card는 드롭다운 때문에 overflow visible 유지 */
+  .settings-card {
+    overflow: visible !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 카드 인라인 패딩 모바일용 */
+  .card-section {
+    padding: 14px !important;
+  }
+
+  /* ── 페이지 직접 자식 요소 너비 제한 ── */
+  .page > * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   /* ── 요약 카드 1열 ── */
@@ -1315,7 +1345,7 @@ button { cursor: pointer; font-family: inherit; }
   .tx-table { min-width: 0; width: 100%; }
   .tx-table th:nth-child(4),
   .tx-table td:nth-child(4) { display: none; }
-  .tx-table th, .tx-table td { padding: 8px; font-size: 12px; }
+  .tx-table th, .tx-table td { padding: 8px; font-size: 12px; white-space: nowrap; }
 
   /* ── 달력 ── */
   .calendar-card { padding: 10px !important; }

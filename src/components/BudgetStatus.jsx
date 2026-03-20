@@ -33,7 +33,7 @@ export default function BudgetStatus({ transactions }) {
   }
 
   return (
-    <div className="card" style={{ marginTop: 16, padding: '20px 24px' }}>
+    <div className="card card-section">
       <h2 style={{ margin: '0 0 20px', fontSize: 16, color: 'var(--text-primary)' }}>예산 현황</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {items.map((item) => (

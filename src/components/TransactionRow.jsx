@@ -6,7 +6,7 @@ export default function TransactionRow({ transaction, onEdit, onDelete, isFixed 
 
   return (
     <tr className="tx-row">
-      <td>{dayjs(date).format('YYYY.MM.DD')}</td>
+      <td>{dayjs(date).format('MM.DD')}</td>
       <td>
         <span className={`type-badge ${type}`}>
           {isIncome ? '수입' : '지출'}

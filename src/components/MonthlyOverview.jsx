@@ -37,7 +37,7 @@ export default function MonthlyOverview({ year, currentMonth }) {
   }, [year])
 
   return (
-    <div className="card" style={{ padding: '20px 24px', marginBottom: 16 }}>
+    <div className="card card-section">
       <h2 style={{ margin: '0 0 16px', fontSize: 16, color: 'var(--text-primary)' }}>{year}년 월별 현황</h2>
       <div className="monthly-grid">
         {rows.map((r) => {

@@ -5,14 +5,10 @@ import { applyFixedExpenses, getFixedExpenses } from '../api/client'
 import TransactionList from '../components/TransactionList'
 import TransactionForm from '../components/TransactionForm'
 import MessageParser from '../components/MessageParser'
-import Select from '../components/Select'
-
 export default function HistoryPage() {
   const today = dayjs()
   const [year, setYear] = useState(today.year())
   const [month, setMonth] = useState(today.month() + 1)
-  const [filterType, setFilterType] = useState('')
-  const [filterCategory, setFilterCategory] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
   const [fixedNames, setFixedNames] = useState(new Set())
@@ -27,11 +23,7 @@ export default function HistoryPage() {
     addTransaction, editTransaction, removeTransaction, refresh,
   } = useTransactions(year, month)
 
-  const filtered = transactions.filter((t) => {
-    if (filterType && t.type !== filterType) return false
-    if (filterCategory && t.category !== filterCategory) return false
-    return true
-  })
+  const filtered = transactions
 
   const handleEdit = (tx) => { setEditTarget(tx); setShowForm(true) }
   const handleDelete = async (id) => {
@@ -66,26 +58,10 @@ export default function HistoryPage() {
       {/* 메시지 파서 */}
       <MessageParser categories={categories} onSubmit={addTransaction} />
 
-      {/* 필터 + 버튼 */}
-      <div className="filter-bar">
-        <div className="filter-select-wrap">
-          <Select
-            value={filterType}
-            onChange={setFilterType}
-            options={[{ value: 'income', label: '수입' }, { value: 'expense', label: '지출' }]}
-            placeholder="전체"
-          />
-        </div>
-        <div className="filter-select-wrap">
-          <Select
-            value={filterCategory}
-            onChange={setFilterCategory}
-            options={categories.map((c) => ({ value: c.name, label: c.name }))}
-            placeholder="전체 카테고리"
-          />
-        </div>
-        <div className="filter-actions">
-          <span className="count">{filtered.length}건</span>
+      {/* 버튼 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span className="count">{filtered.length}건</span>
+        <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn secondary" onClick={handleApplyFixed}>📌 고정비 반영</button>
           <button className="btn primary" onClick={() => { setEditTarget(null); setShowForm(true) }}>+ 추가</button>
         </div>
