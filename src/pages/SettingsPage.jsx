@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getCategories, createCategory, deleteCategory } from '../api/client'
+import { getCategories, createCategory, deleteCategory, reorderCategories } from '../api/client'
 import Select from '../components/Select'
 
 export default function SettingsPage() {
@@ -35,8 +35,70 @@ export default function SettingsPage() {
     await fetchAll()
   }
 
+  const handleMove = async (type, index, direction) => {
+    const list = categories.filter((c) => c.type === type)
+    const newIndex = index + direction
+    if (newIndex < 0 || newIndex >= list.length) return
+
+    const reordered = [...list]
+    const [moved] = reordered.splice(index, 1)
+    reordered.splice(newIndex, 0, moved)
+
+    const updated = reordered.map((c, i) => ({ name: c.name, type: c.type, sort_order: i }))
+
+    // 즉시 UI 반영
+    const otherType = categories.filter((c) => c.type !== type)
+    const newCategories = [
+      ...otherType,
+      ...updated.map((u) => ({ ...u })),
+    ]
+    newCategories.sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'income' ? -1 : 1
+      return (a.sort_order || 0) - (b.sort_order || 0)
+    })
+    setCategories(newCategories)
+
+    await reorderCategories(updated)
+  }
+
   const income = categories.filter((c) => c.type === 'income')
   const expense = categories.filter((c) => c.type === 'expense')
+
+  const renderCategoryList = (list, type, label, badgeClass) => (
+    <div className="settings-card">
+      <h2 className="settings-section-title">
+        {label} 카테고리 <span className="category-count">{list.length}개</span>
+      </h2>
+      <div className="category-list">
+        {list.map((c, i) => (
+          <div key={c.name} className={`category-item ${type}`}>
+            <div className="category-order-buttons">
+              <button
+                className="btn-order"
+                disabled={i === 0}
+                onClick={() => handleMove(type, i, -1)}
+                title="위로"
+              >
+                ▲
+              </button>
+              <button
+                className="btn-order"
+                disabled={i === list.length - 1}
+                onClick={() => handleMove(type, i, 1)}
+                title="아래로"
+              >
+                ▼
+              </button>
+            </div>
+            <span className="category-name">{c.name}</span>
+            <span className={`category-type-badge ${badgeClass}`}>{label}</span>
+            <button className="btn-icon danger" onClick={() => handleDeleteCat(c.name)}>🗑️</button>
+          </div>
+        ))}
+        {list.length === 0 && <p className="empty-small">{label} 카테고리가 없습니다.</p>}
+      </div>
+    </div>
+  )
 
   return (
     <div className="page">
@@ -68,38 +130,10 @@ export default function SettingsPage() {
       </div>
 
       {/* ── 수입 카테고리 ── */}
-      <div className="settings-card">
-        <h2 className="settings-section-title">
-          수입 카테고리 <span className="category-count">{income.length}개</span>
-        </h2>
-        <div className="category-list">
-          {income.map((c) => (
-            <div key={c.name} className="category-item income">
-              <span className="category-name">{c.name}</span>
-              <span className="category-type-badge income">수입</span>
-              <button className="btn-icon danger" onClick={() => handleDeleteCat(c.name)}>🗑️</button>
-            </div>
-          ))}
-          {income.length === 0 && <p className="empty-small">수입 카테고리가 없습니다.</p>}
-        </div>
-      </div>
+      {renderCategoryList(income, 'income', '수입', 'income')}
 
       {/* ── 지출 카테고리 ── */}
-      <div className="settings-card">
-        <h2 className="settings-section-title">
-          지출 카테고리 <span className="category-count">{expense.length}개</span>
-        </h2>
-        <div className="category-list">
-          {expense.map((c) => (
-            <div key={c.name} className="category-item expense">
-              <span className="category-name">{c.name}</span>
-              <span className="category-type-badge expense">지출</span>
-              <button className="btn-icon danger" onClick={() => handleDeleteCat(c.name)}>🗑️</button>
-            </div>
-          ))}
-          {expense.length === 0 && <p className="empty-small">지출 카테고리가 없습니다.</p>}
-        </div>
-      </div>
+      {renderCategoryList(expense, 'expense', '지출', 'expense')}
     </div>
   )
 }

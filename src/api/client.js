@@ -17,6 +17,7 @@ export const getYearlySummary = () => api.get('/summary/yearly')
 export const getCategories = () => api.get('/categories')
 export const createCategory = (data) => api.post('/categories', data)
 export const deleteCategory = (name) => api.delete(`/categories/${encodeURIComponent(name)}`)
+export const reorderCategories = (categories) => api.put('/categories/reorder', { categories })
 
 // 적금
 export const getSavings = () => api.get('/savings')
