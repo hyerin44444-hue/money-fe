@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 /**
  * props:
@@ -6,18 +7,40 @@ import { useState, useRef, useEffect } from 'react'
  */
 export default function Select({ value, onChange, options = [], placeholder = 'ì„ íƒ' }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef(null)
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 })
+  const wrapRef = useRef(null)
+  const menuRef = useRef(null)
 
   const selected = options.find((o) => o.value === value)
 
+  const updatePos = () => {
+    if (!wrapRef.current) return
+    const r = wrapRef.current.getBoundingClientRect()
+    setPos({ top: r.bottom + 6, left: r.left, width: r.width })
+  }
+
+  useLayoutEffect(() => { if (open) updatePos() }, [open])
+
   useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+    if (!open) return
+    const onScrollOrResize = () => updatePos()
+    const onDown = (e) => {
+      if (wrapRef.current?.contains(e.target)) return
+      if (menuRef.current?.contains(e.target)) return
+      setOpen(false)
+    }
+    window.addEventListener('scroll', onScrollOrResize, true)
+    window.addEventListener('resize', onScrollOrResize)
+    document.addEventListener('mousedown', onDown)
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize, true)
+      window.removeEventListener('resize', onScrollOrResize)
+      document.removeEventListener('mousedown', onDown)
+    }
+  }, [open])
 
   return (
-    <div className={`custom-select ${open ? 'open' : ''}`} ref={ref}>
+    <div className={`custom-select ${open ? 'open' : ''}`} ref={wrapRef}>
       <button
         type="button"
         className="custom-select-trigger"
@@ -31,8 +54,12 @@ export default function Select({ value, onChange, options = [], placeholder = 'ì
         </svg>
       </button>
 
-      {open && (
-        <ul className="custom-select-menu">
+      {open && createPortal(
+        <ul
+          ref={menuRef}
+          className="custom-select-menu custom-select-menu-portal"
+          style={{ top: pos.top, left: pos.left, width: pos.width }}
+        >
           {placeholder && !value && (
             <li className="select-option placeholder-opt" onClick={() => { onChange(''); setOpen(false) }}>
               {placeholder}
@@ -52,7 +79,8 @@ export default function Select({ value, onChange, options = [], placeholder = 'ì
               )}
             </li>
           ))}
-        </ul>
+        </ul>,
+        document.body
       )}
     </div>
   )

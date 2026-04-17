@@ -29,6 +29,12 @@ export const getBudgets = () => api.get('/budgets')
 export const upsertBudget = (data) => api.post('/budgets', data)
 export const deleteBudget = (id) => api.delete(`/budgets/${id}`)
 
+// 경조사
+export const getEvents = () => api.get('/events')
+export const createEvent = (data) => api.post('/events', data)
+export const updateEvent = (id, data) => api.put(`/events/${id}`, data)
+export const deleteEvent = (id) => api.delete(`/events/${id}`)
+
 // 고정비
 export const getFixedExpenses = () => api.get('/fixed-expenses')
 export const createFixedExpense = (data) => api.post('/fixed-expenses', data)

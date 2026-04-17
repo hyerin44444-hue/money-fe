@@ -859,6 +859,14 @@ button { cursor: pointer; font-family: inherit; }
   padding: 6px;
   max-height: 220px;
   overflow-y: auto;
+  list-style: none;
+  margin: 0;
+}
+.custom-select-menu-portal {
+  position: fixed;
+  top: 0; left: 0;
+  right: auto;
+  z-index: 1000;
 }
 .custom-select-menu::-webkit-scrollbar { width: 4px; }
 .custom-select-menu::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
@@ -1114,6 +1122,152 @@ button { cursor: pointer; font-family: inherit; }
   font-weight: 700;
   color: var(--red);
   white-space: nowrap;
+}
+
+/* ────────────────────────────────────────────
+   Events (경조사)
+──────────────────────────────────────────── */
+.events-summary {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.events-summary-item {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.events-summary-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.events-summary-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.events-summary-value.income { color: var(--green); }
+.events-summary-value.expense { color: var(--red); }
+
+.events-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 14px 0 10px;
+  flex-wrap: wrap;
+}
+.events-search {
+  flex: 1;
+  min-width: 180px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  background: var(--white);
+}
+.events-search:focus { border-color: var(--accent); }
+
+.events-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.events-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 720px;
+}
+.events-table thead th {
+  background: #f7f8fb;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.events-table thead th.num { text-align: right; }
+.events-table thead th.actions,
+.events-table tbody td.actions { width: 110px; text-align: right; white-space: nowrap; }
+.events-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--text-primary);
+}
+.events-table tbody tr:last-child td { border-bottom: none; }
+.events-table tbody tr:hover { background: #fafbff; }
+.events-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.events-table .income { color: var(--green); font-weight: 600; }
+.events-table .expense { color: var(--red); font-weight: 600; }
+.events-name { font-weight: 600; white-space: nowrap; }
+.events-note { color: var(--text-secondary); font-size: 12px; }
+.events-date { white-space: nowrap; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.date-field label {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-left: 2px;
+}
+.date-field input { width: 140px; }
+.events-category-chip {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #eef1ff;
+  color: #4f46e5;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.events-table td.actions .btn-icon,
+.events-table td.actions .btn { display: inline-block; vertical-align: middle; margin-left: 2px; }
+.events-row.editing td { background: #f0f4ff; }
+.events-row.editing input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  background: var(--white);
+}
+.events-row.editing input:focus { border-color: var(--accent); }
+.events-native-select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  background: var(--white);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.events-native-select:focus { border-color: var(--accent); }
+.events-native-select-lg {
+  width: 130px;
+  padding: 9px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+.btn.sm { padding: 5px 10px; font-size: 12px; }
+
+@media (max-width: 640px) {
+  .events-summary-item { min-width: 100%; }
 }
 
 /* ────────────────────────────────────────────
