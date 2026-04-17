@@ -1212,17 +1212,52 @@ button { cursor: pointer; font-family: inherit; }
 .events-name { font-weight: 600; white-space: nowrap; }
 .events-note { color: var(--text-secondary); font-size: 12px; }
 .events-date { white-space: nowrap; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-.date-field {
+
+.events-form {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+.events-field {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  min-width: 0;
 }
-.date-field label {
+.events-field label {
   font-size: 11px;
   color: var(--text-muted);
   padding-left: 2px;
 }
-.date-field input { width: 140px; }
+.events-field > input,
+.events-field > .custom-select > .custom-select-trigger {
+  width: 100%;
+  height: 38px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  background: var(--white);
+  transition: border-color 0.15s;
+}
+.events-field > input:focus { border-color: var(--accent); }
+.events-field-note { grid-column: span 3; }
+.events-submit {
+  grid-column: span 3;
+  height: 38px;
+  align-self: end;
+}
+
+@media (max-width: 900px) {
+  .events-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .events-field-note,
+  .events-submit { grid-column: span 2; }
+}
 .events-category-chip {
   display: inline-block;
   padding: 3px 9px;

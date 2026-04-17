@@ -108,14 +108,17 @@ export default function EventsPage() {
         </h2>
         <p className="settings-desc">결혼식·돌잔치·장례식 등 경조사에서 주고 받은 금액을 기록합니다. 받은 금액이 없는 사람도 추가할 수 있습니다.</p>
 
-        <form className="fixed-form" onSubmit={handleAdd}>
-          <input
-            type="text"
-            placeholder="사람 이름"
-            value={form.person_name}
-            onChange={(e) => setForm((p) => ({ ...p, person_name: e.target.value }))}
-          />
-          <div style={{ width: 130 }}>
+        <form className="events-form" onSubmit={handleAdd}>
+          <div className="events-field">
+            <label>사람 이름</label>
+            <input
+              type="text"
+              value={form.person_name}
+              onChange={(e) => setForm((p) => ({ ...p, person_name: e.target.value }))}
+            />
+          </div>
+          <div className="events-field" style={{ width: 130 }}>
+            <label>카테고리</label>
             <Select
               value={form.category}
               onChange={(v) => setForm((p) => ({ ...p, category: v }))}
@@ -123,7 +126,7 @@ export default function EventsPage() {
               placeholder="카테고리"
             />
           </div>
-          <div className="date-field">
+          <div className="events-field">
             <label>받은 날짜</label>
             <input
               type="date"
@@ -131,14 +134,16 @@ export default function EventsPage() {
               onChange={(e) => setForm((p) => ({ ...p, received_date: e.target.value }))}
             />
           </div>
-          <input
-            type="number"
-            placeholder="내가 받은 금액"
-            value={form.received_amount}
-            onChange={(e) => setForm((p) => ({ ...p, received_amount: e.target.value }))}
-            min="0"
-          />
-          <div className="date-field">
+          <div className="events-field">
+            <label>받은 금액</label>
+            <input
+              type="number"
+              value={form.received_amount}
+              onChange={(e) => setForm((p) => ({ ...p, received_amount: e.target.value }))}
+              min="0"
+            />
+          </div>
+          <div className="events-field">
             <label>준 날짜</label>
             <input
               type="date"
@@ -146,20 +151,24 @@ export default function EventsPage() {
               onChange={(e) => setForm((p) => ({ ...p, given_date: e.target.value }))}
             />
           </div>
-          <input
-            type="number"
-            placeholder="내가 준 금액"
-            value={form.given_amount}
-            onChange={(e) => setForm((p) => ({ ...p, given_amount: e.target.value }))}
-            min="0"
-          />
-          <input
-            type="text"
-            placeholder="메모 (선택)"
-            value={form.note}
-            onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}
-          />
-          <button type="submit" className="btn primary" disabled={submitting}>
+          <div className="events-field">
+            <label>준 금액</label>
+            <input
+              type="number"
+              value={form.given_amount}
+              onChange={(e) => setForm((p) => ({ ...p, given_amount: e.target.value }))}
+              min="0"
+            />
+          </div>
+          <div className="events-field events-field-note">
+            <label>메모 (선택)</label>
+            <input
+              type="text"
+              value={form.note}
+              onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}
+            />
+          </div>
+          <button type="submit" className="btn primary events-submit" disabled={submitting}>
             {submitting ? '추가 중...' : '+ 추가'}
           </button>
         </form>
