@@ -40,6 +40,33 @@ export default function HistoryPage() {
     if (res.data.length === 0) alert('반영할 항목이 없거나 이미 반영되었습니다.')
     else { alert(`${res.data.length}건 반영되었습니다.`); await refresh() }
   }
+  const handleExportCSV = () => {
+    if (filtered.length === 0) { alert('내보낼 내역이 없습니다.'); return }
+    const headers = ['날짜', '구분', '카테고리', '금액', '메모']
+    const escape = (v) => {
+      const s = String(v ?? '')
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const rows = [...filtered]
+      .sort((a, b) => (a.date > b.date ? 1 : -1))
+      .map((t) => [
+        t.date,
+        t.type === 'income' ? '수입' : '지출',
+        t.category,
+        t.amount,
+        t.note || '',
+      ].map(escape).join(','))
+    const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `가계부_${year}-${String(month).padStart(2, '0')}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="page">
@@ -62,6 +89,7 @@ export default function HistoryPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span className="count">{filtered.length}건</span>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn secondary" onClick={handleExportCSV}>📥 CSV</button>
           <button className="btn secondary" onClick={handleApplyFixed}>📌 고정비 반영</button>
           <button className="btn primary" onClick={() => { setEditTarget(null); setShowForm(true) }}>+ 추가</button>
         </div>
