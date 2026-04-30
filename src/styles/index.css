@@ -215,7 +215,7 @@ button { cursor: pointer; font-family: inherit; }
 ──────────────────────────────────────────── */
 .summary-card {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
@@ -241,6 +241,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 .summary-item.income .amount { color: #1e88e5; }
 .summary-item.expense .amount { color: var(--red); }
+.summary-item.savings .amount { color: #f59e0b; }
 .summary-item.balance .amount { color: var(--text-primary); }
 
 .summary-item .badge {
@@ -255,6 +256,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 .badge.up { background: #dcfce7; color: #16a34a; }
 .badge.down { background: #fee2e2; color: var(--red); }
+.badge.savings { background: #fef3c7; color: #b45309; }
 
 /* ────────────────────────────────────────────
    Section Header
@@ -1523,8 +1525,8 @@ button { cursor: pointer; font-family: inherit; }
     box-sizing: border-box !important;
   }
 
-  /* ── 요약 카드 1열 ── */
-  .summary-card { grid-template-columns: 1fr; gap: 8px; }
+  /* ── 요약 카드 2열 ── */
+  .summary-card { grid-template-columns: repeat(2, 1fr); gap: 8px; }
 
   /* ── 수입/지출 현황 차트: 세로 배치 ── */
   .period-chart-wrap {
