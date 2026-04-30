@@ -4,12 +4,22 @@ import { getBudgets } from '../api/client'
 export default function BudgetStatus({ transactions }) {
   const [budgets, setBudgets] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
+  const [checkedCategories, setCheckedCategories] = useState({})
 
   useEffect(() => {
-    getBudgets().then((res) => setBudgets(res.data))
+    getBudgets().then((res) => {
+      setBudgets(res.data)
+      const initial = {}
+      res.data.forEach((b) => { initial[b.category] = true })
+      setCheckedCategories(initial)
+    })
   }, [])
 
   if (!budgets.length) return null
+
+  const toggleChecked = (category) => {
+    setCheckedCategories((prev) => ({ ...prev, [category]: !prev[category] }))
+  }
 
   const expenseTransactions = transactions.filter((t) => t.type === 'expense')
 
@@ -26,6 +36,11 @@ export default function BudgetStatus({ transactions }) {
     const pct = Math.round(ratio * 100)
     return { ...b, budget, spent, remaining, pct }
   })
+
+  const checkedItems = items.filter((i) => checkedCategories[i.category])
+  const totalBudget = checkedItems.reduce((s, i) => s + i.budget, 0)
+  const totalSpent = checkedItems.reduce((s, i) => s + i.spent, 0)
+  const totalRemaining = totalBudget - totalSpent
 
   const barColor = (pct) => {
     if (pct >= 100) return '#ef4444'
@@ -45,7 +60,21 @@ export default function BudgetStatus({ transactions }) {
 
   return (
     <div className="card card-section">
-      <h2 style={{ margin: '0 0 20px', fontSize: 16, color: 'var(--text-primary)' }}>예산 현황</h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
+        <h2 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>예산 현황</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--text-secondary)' }}>
+          <span>
+            선택 합계 <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{totalSpent.toLocaleString()}원</span>
+            <span style={{ color: 'var(--text-muted)', margin: '0 3px' }}>/</span>
+            <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{totalBudget.toLocaleString()}원</span>
+          </span>
+          <span className={`budget-status-badge ${totalRemaining < 0 ? 'over' : 'remain'}`}>
+            {totalRemaining < 0
+              ? `초과 ${Math.abs(totalRemaining).toLocaleString()}원`
+              : `잔여 ${totalRemaining.toLocaleString()}원`}
+          </span>
+        </div>
+      </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {items.map((item) => (
           <div
@@ -54,7 +83,16 @@ export default function BudgetStatus({ transactions }) {
             style={{ cursor: 'pointer' }}
           >
             <div className="budget-status-header">
-              <span className="budget-status-name">{item.category}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={!!checkedCategories[item.category]}
+                  onChange={() => toggleChecked(item.category)}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ cursor: 'pointer', accentColor: 'var(--accent)' }}
+                />
+                <span className="budget-status-name">{item.category}</span>
+              </span>
               <div className="budget-status-info">
                 <span className="budget-status-amounts">
                   {item.spent.toLocaleString()}원
