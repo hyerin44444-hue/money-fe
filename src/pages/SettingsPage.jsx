@@ -36,11 +36,14 @@ export default function SettingsPage() {
   }
 
   const handleMove = async (type, index, direction) => {
-    const list = categories.filter((c) => c.type === type)
+    const sameType = categories
+      .filter((c) => c.type === type)
+      .slice()
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     const newIndex = index + direction
-    if (newIndex < 0 || newIndex >= list.length) return
+    if (newIndex < 0 || newIndex >= sameType.length) return
 
-    const reordered = [...list]
+    const reordered = [...sameType]
     const [moved] = reordered.splice(index, 1)
     reordered.splice(newIndex, 0, moved)
 
@@ -48,21 +51,28 @@ export default function SettingsPage() {
 
     // 즉시 UI 반영
     const otherType = categories.filter((c) => c.type !== type)
-    const newCategories = [
-      ...otherType,
-      ...updated.map((u) => ({ ...u })),
-    ]
-    newCategories.sort((a, b) => {
+    const merged = [...otherType, ...updated].sort((a, b) => {
       if (a.type !== b.type) return a.type === 'income' ? -1 : 1
-      return (a.sort_order || 0) - (b.sort_order || 0)
+      return (a.sort_order ?? 0) - (b.sort_order ?? 0)
     })
-    setCategories(newCategories)
+    setCategories(merged)
 
-    await reorderCategories(updated)
+    try {
+      await reorderCategories(updated)
+      // 서버 저장 확인용 재조회
+      await fetchAll()
+    } catch (e) {
+      const msg = e.response?.data?.detail || e.message || '순서 저장 실패'
+      alert(`카테고리 순서 저장 실패: ${msg}\n\n` +
+        `1) Supabase categories 테이블에 sort_order(int4) 컬럼이 있는지 확인\n` +
+        `2) 백엔드가 최신 코드로 배포됐는지 확인 (PUT /api/categories/reorder)`)
+      await fetchAll()
+    }
   }
 
-  const income = categories.filter((c) => c.type === 'income')
-  const expense = categories.filter((c) => c.type === 'expense')
+  const sortByOrder = (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+  const income = categories.filter((c) => c.type === 'income').slice().sort(sortByOrder)
+  const expense = categories.filter((c) => c.type === 'expense').slice().sort(sortByOrder)
 
   const renderCategoryList = (list, type, label, badgeClass) => (
     <div className="settings-card">

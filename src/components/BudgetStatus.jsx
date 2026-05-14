@@ -1,16 +1,23 @@
 import { useState, useEffect } from 'react'
-import { getBudgets } from '../api/client'
+import { getBudgets, getCategories } from '../api/client'
 
 export default function BudgetStatus({ transactions }) {
   const [budgets, setBudgets] = useState([])
+  const [categoryOrder, setCategoryOrder] = useState({})
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [checkedCategories, setCheckedCategories] = useState({})
 
   useEffect(() => {
-    getBudgets().then((res) => {
-      setBudgets(res.data)
+    Promise.all([getBudgets(), getCategories()]).then(([budRes, catRes]) => {
+      const orderMap = {}
+      catRes.data.forEach((c) => { orderMap[c.name] = c.sort_order ?? 0 })
+      setCategoryOrder(orderMap)
+      const sortedBudgets = budRes.data
+        .slice()
+        .sort((a, b) => (orderMap[a.category] ?? 0) - (orderMap[b.category] ?? 0))
+      setBudgets(sortedBudgets)
       const initial = {}
-      res.data.forEach((b) => { initial[b.category] = true })
+      sortedBudgets.forEach((b) => { initial[b.category] = true })
       setCheckedCategories(initial)
     })
   }, [])

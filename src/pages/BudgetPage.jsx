@@ -9,7 +9,11 @@ export default function BudgetPage() {
 
   const fetchAll = async () => {
     const [catRes, budRes] = await Promise.all([getCategories(), getBudgets()])
-    setCategories(catRes.data.filter((c) => c.type === 'expense'))
+    const sorted = catRes.data
+      .filter((c) => c.type === 'expense')
+      .slice()
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    setCategories(sorted)
     const map = {}
     budRes.data.forEach((b) => { map[b.category] = { id: b.id, amount: Number(b.amount) } })
     setBudgets(map)
