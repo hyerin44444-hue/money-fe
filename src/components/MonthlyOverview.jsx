@@ -36,9 +36,29 @@ export default function MonthlyOverview({ year, currentMonth }) {
     })
   }, [year])
 
+  const totalIncome = rows.reduce((s, r) => s + (r.income || 0), 0)
+  const totalExpense = rows.reduce((s, r) => s + (r.expense || 0), 0)
+  const totalSavings = rows.reduce((s, r) => s + (r.savings || 0), 0)
+  const fmtWon = (n) => `${Number(n).toLocaleString('ko-KR')}원`
+
   return (
     <div className="card card-section">
-      <h2 style={{ margin: '0 0 16px', fontSize: 16, color: 'var(--text-primary)' }}>{year}년 월별 현황</h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        <h2 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>{year}년 월별 현황</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
+          <span>
+            수입 <span style={{ fontWeight: 700, color: 'var(--green)' }}>{fmtWon(totalIncome)}</span>
+          </span>
+          <span style={{ color: 'var(--text-muted)' }}>·</span>
+          <span>
+            지출 <span style={{ fontWeight: 700, color: 'var(--red)' }}>{fmtWon(totalExpense)}</span>
+          </span>
+          <span style={{ color: 'var(--text-muted)' }}>·</span>
+          <span>
+            적금 <span style={{ fontWeight: 700, color: '#4f86f7' }}>{fmtWon(totalSavings)}</span>
+          </span>
+        </div>
+      </div>
       <div className="monthly-grid">
         {rows.map((r) => {
           const isCurrentMonth = r.month === currentMonth && year === today.year()
