@@ -23,6 +23,8 @@ export default function TransactionForm({ categories, onSubmit, onClose, initial
 
   const filteredCategories = categories
     .filter((c) => c.type === form.type || c.type === 'both')
+    .slice()
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     .map((c) => ({ value: c.name, label: c.name }))
 
   const handleSubmit = async (e) => {
