@@ -35,6 +35,12 @@ export const createEvent = (data) => api.post('/events', data)
 export const updateEvent = (id, data) => api.put(`/events/${id}`, data)
 export const deleteEvent = (id) => api.delete(`/events/${id}`)
 
+// 현금 자산
+export const getCash = () => api.get('/cash')
+export const createCash = (data) => api.post('/cash', data)
+export const updateCash = (id, data) => api.put(`/cash/${id}`, data)
+export const deleteCash = (id) => api.delete(`/cash/${id}`)
+
 // 주식
 export const getStocks = () => api.get('/stocks')
 export const createStock = (data) => api.post('/stocks', data)

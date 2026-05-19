@@ -9,6 +9,7 @@ import SavingsPage from './pages/SavingsPage'
 import FixedExpensePage from './pages/FixedExpensePage'
 import EventsPage from './pages/EventsPage'
 import StocksPage from './pages/StocksPage'
+import AssetsPage from './pages/AssetsPage'
 
 const NAV_ITEMS = [
   { to: '/', label: '대시보드', icon: '▦', end: true },
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { to: '/budget', label: '예산', icon: '◎', end: false },
   { to: '/fixed', label: '고정비', icon: '📌', end: false },
   { to: '/stocks', label: '주식', icon: '📈', end: false },
+  { to: '/assets', label: '자산', icon: '💎', end: false },
   { to: '/events', label: '경조사', icon: '💌', end: false },
   { to: '/settings', label: '설정', icon: '⚙', end: false },
 ]
@@ -66,6 +68,7 @@ export default function App() {
               <Route path="/budget" element={<><span className="page-title">예산</span><span className="page-sub">카테고리별 월 예산을 설정하세요.</span></>} />
               <Route path="/fixed" element={<><span className="page-title">고정비</span><span className="page-sub">매달 나가는 고정 지출을 관리하세요.</span></>} />
               <Route path="/stocks" element={<><span className="page-title">주식</span><span className="page-sub">보유 주식 현황과 수익률을 확인하세요.</span></>} />
+              <Route path="/assets" element={<><span className="page-title">자산</span><span className="page-sub">적금·주식·현금을 합산한 총 자산을 확인하세요.</span></>} />
               <Route path="/events" element={<><span className="page-title">경조사</span><span className="page-sub">결혼식·장례식 등 주고 받은 기록을 관리하세요.</span></>} />
               <Route path="/settings" element={<><span className="page-title">설정</span><span className="page-sub">카테고리를 추가하고 관리하세요.</span></>} />
             </Routes>
@@ -80,6 +83,7 @@ export default function App() {
             <Route path="/budget" element={<BudgetPage />} />
             <Route path="/fixed" element={<FixedExpensePage />} />
             <Route path="/stocks" element={<StocksPage />} />
+            <Route path="/assets" element={<AssetsPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
