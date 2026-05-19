@@ -1,14 +1,46 @@
 import { useState, useEffect } from 'react'
 import { getSavings, getStocks, getCash, createCash, updateCash, deleteCash } from '../api/client'
 import dayjs from 'dayjs'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
 const fmt = (n) => Number(n).toLocaleString('ko-KR') + '원'
 const EMPTY_FORM = { category: '', amount: '', note: '', date: dayjs().format('YYYY-MM-DD') }
+
+function buildTrend(savingsGroups, cashList, stocksTotal) {
+  const months = Array.from({ length: 12 }, (_, i) =>
+    dayjs().subtract(11 - i, 'month').format('YYYY-MM')
+  )
+
+  // 적금: 해당 월까지 누계
+  const allSavingsRecords = savingsGroups.flatMap((g) => g.records)
+
+  // 현금: 해당 월까지 누계
+  return months.map((ym) => {
+    const savAcc = allSavingsRecords
+      .filter((r) => r.date.slice(0, 7) <= ym)
+      .reduce((s, r) => s + Number(r.amount), 0)
+
+    const cashAcc = cashList
+      .filter((c) => (c.date || '').slice(0, 7) <= ym)
+      .reduce((s, c) => s + Number(c.amount), 0)
+
+    const isCurrentMonth = ym === dayjs().format('YYYY-MM')
+
+    return {
+      month: ym.slice(5) + '월',
+      적금: Math.round(savAcc),
+      현금: Math.round(cashAcc),
+      주식: isCurrentMonth ? Math.round(stocksTotal) : null,
+      total: Math.round(savAcc + cashAcc + (isCurrentMonth ? stocksTotal : 0)),
+    }
+  })
+}
 
 export default function AssetsPage() {
   const [savingsTotal, setSavingsTotal] = useState(0)
   const [stocksTotal, setStocksTotal] = useState(0)
   const [cashList, setCashList] = useState([])
+  const [trend, setTrend] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -20,9 +52,11 @@ export default function AssetsPage() {
     setLoading(true)
     try {
       const [savRes, stRes, cashRes] = await Promise.all([getSavings(), getStocks(), getCash()])
+      const stTotal = stRes.data.reduce((s, st) => s + (st.current_value || 0), 0)
       setSavingsTotal(savRes.data.reduce((s, g) => s + g.total, 0))
-      setStocksTotal(stRes.data.reduce((s, st) => s + (st.current_value || 0), 0))
+      setStocksTotal(stTotal)
       setCashList(cashRes.data)
+      setTrend(buildTrend(savRes.data, cashRes.data, stTotal))
     } finally {
       setLoading(false)
     }
@@ -78,6 +112,48 @@ export default function AssetsPage() {
           {loading ? '계산 중...' : fmt(Math.round(total))}
         </p>
       </div>
+
+      {/* 순자산 추이 그래프 */}
+      {!loading && trend.length > 0 && (
+        <div className="card card-section">
+          <h2 style={{ margin: '0 0 16px', fontSize: 15 }}>순자산 추이 (12개월)</h2>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={trend} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gSav" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#4f86f7" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#4f86f7" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gCash" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gStock" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis
+                tick={{ fontSize: 10 }}
+                tickFormatter={(v) => v >= 100000000 ? `${(v / 100000000).toFixed(0)}억` : v >= 10000 ? `${Math.round(v / 10000)}만` : v}
+                width={40}
+              />
+              <Tooltip
+                formatter={(v, name) => [v != null ? fmt(v) : '-', name]}
+                contentStyle={{ fontSize: 12, borderRadius: 8 }}
+              />
+              <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11 }} />
+              <Area type="monotone" dataKey="적금" stroke="#4f86f7" fill="url(#gSav)" strokeWidth={2} connectNulls />
+              <Area type="monotone" dataKey="현금" stroke="#f59e0b" fill="url(#gCash)" strokeWidth={2} connectNulls />
+              <Area type="monotone" dataKey="주식" stroke="#22c55e" fill="url(#gStock)" strokeWidth={2} connectNulls dot={{ r: 4 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, textAlign: 'right' }}>
+            * 주식은 현재 시세 기준 (이번달만 표시)
+          </p>
+        </div>
+      )}
 
       {/* 자산 항목별 */}
       {assets.map(({ label, value, color, icon }) => (
