@@ -202,6 +202,11 @@ export default function StocksPage() {
                             <div>
                               <span style={{ fontWeight: 700, fontSize: 14 }}>{st.name}</span>
                               <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>{st.ticker}</span>
+                              {st.currency === 'USD' && (
+                                <span style={{ fontSize: 10, background: '#dbeafe', color: '#1d4ed8', borderRadius: 4, padding: '1px 5px', marginLeft: 5 }}>
+                                  USD {st.usd_krw ? `(${st.usd_krw.toLocaleString()}원)` : ''}
+                                </span>
+                              )}
                             </div>
                             <div style={{ display: 'flex', gap: 6 }}>
                               <button className="btn secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => handleEdit(st)}>수정</button>
@@ -211,8 +216,8 @@ export default function StocksPage() {
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
                             {[
                               { label: '보유수량',   value: `${st.quantity}주` },
-                              { label: '평균매입가', value: `${fmt(Math.round(st.avg_price))}원` },
-                              { label: '현재가',     value: st.current_price ? `${fmt(Math.round(st.current_price))}원` : '조회 실패' },
+                              { label: '평균매입가', value: st.currency === 'USD' ? `$${st.avg_price.toLocaleString()}` : `${fmt(Math.round(st.avg_price))}원` },
+                              { label: '현재가',     value: st.current_price ? (st.currency === 'USD' ? `$${st.current_price.toFixed(2)} (${fmt(Math.round(st.current_price_krw))}원)` : `${fmt(Math.round(st.current_price))}원`) : '조회 실패' },
                               { label: '평가금액',   value: st.current_value ? `${fmt(Math.round(st.current_value))}원` : '-' },
                             ].map(({ label, value }) => (
                               <div key={label} style={{ background: 'var(--bg)', borderRadius: 6, padding: '6px 8px' }}>
