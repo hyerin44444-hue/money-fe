@@ -35,6 +35,12 @@ export const createEvent = (data) => api.post('/events', data)
 export const updateEvent = (id, data) => api.put(`/events/${id}`, data)
 export const deleteEvent = (id) => api.delete(`/events/${id}`)
 
+// 주식
+export const getStocks = () => api.get('/stocks')
+export const createStock = (data) => api.post('/stocks', data)
+export const updateStock = (id, data) => api.put(`/stocks/${id}`, data)
+export const deleteStock = (id) => api.delete(`/stocks/${id}`)
+
 // 고정비
 export const getFixedExpenses = () => api.get('/fixed-expenses')
 export const createFixedExpense = (data) => api.post('/fixed-expenses', data)
