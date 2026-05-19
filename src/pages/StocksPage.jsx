@@ -98,7 +98,7 @@ export default function StocksPage() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        <div className="stock-summary-grid">
           {[
             { label: '매입금액',  value: `${fmt(Math.round(totalPurchase))}원`, color: 'var(--text-primary)' },
             { label: '평가금액',  value: `${fmt(Math.round(totalCurrent))}원`,  color: 'var(--text-primary)' },
@@ -174,7 +174,7 @@ export default function StocksPage() {
           return (
             <div key={owner} className="card card-section">
               {/* 소유자 헤더 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div className="stock-owner-header">
                 <h2 style={{ margin: 0, fontSize: 15 }}>👤 {owner}</h2>
                 <div style={{ fontSize: 13, color: 'var(--text-secondary)', display: 'flex', gap: 12 }}>
                   <span>평가 <strong style={{ color: 'var(--text-primary)' }}>{fmt(Math.round(ownerCurrent))}원</strong></span>
@@ -206,31 +206,31 @@ export default function StocksPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {acStocks.map((st) => (
                         <div key={st.id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', background: '#fff' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                          <div className="stock-item-header">
                             <div>
                               <span style={{ fontWeight: 700, fontSize: 14 }}>{st.name}</span>
                               <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>{st.ticker}</span>
                               {st.currency === 'USD' && (
                                 <span style={{ fontSize: 10, background: '#dbeafe', color: '#1d4ed8', borderRadius: 4, padding: '1px 5px', marginLeft: 5 }}>
-                                  USD {st.usd_krw ? `(${st.usd_krw.toLocaleString()}원)` : ''}
+                                  USD
                                 </span>
                               )}
                             </div>
-                            <div style={{ display: 'flex', gap: 6 }}>
+                            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                               <button className="btn secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => handleEdit(st)}>수정</button>
                               <button className="btn-icon danger" onClick={() => handleDelete(st.id, st.name)}>🗑️</button>
                             </div>
                           </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                          <div className="stock-detail-grid">
                             {[
                               { label: '보유수량',   value: `${st.quantity}주` },
                               { label: '평균매입가', value: st.currency === 'USD' ? `$${st.avg_price.toLocaleString()}` : `${fmt(Math.round(st.avg_price))}원` },
-                              { label: '현재가',     value: st.current_price ? (st.currency === 'USD' ? `$${st.current_price.toFixed(2)} (${fmt(Math.round(st.current_price_krw))}원)` : `${fmt(Math.round(st.current_price))}원`) : '조회 실패' },
+                              { label: '현재가',     value: st.current_price ? (st.currency === 'USD' ? `$${st.current_price.toFixed(2)}` : `${fmt(Math.round(st.current_price))}원`) : '조회 실패' },
                               { label: '평가금액',   value: st.current_value ? `${fmt(Math.round(st.current_value))}원` : '-' },
                             ].map(({ label, value }) => (
                               <div key={label} style={{ background: 'var(--bg)', borderRadius: 6, padding: '6px 8px' }}>
                                 <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>{label}</div>
-                                <div style={{ fontSize: 12, fontWeight: 600 }}>{value}</div>
+                                <div className="stock-price-text">{value}</div>
                               </div>
                             ))}
                           </div>

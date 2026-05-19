@@ -1643,3 +1643,52 @@ button { cursor: pointer; font-family: inherit; }
   .monthly-cell-month { font-size: 12px; margin-bottom: 6px; }
   .monthly-cell-row { font-size: 10px; }
 }
+
+/* ── 주식 페이지 반응형 ── */
+.stock-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.stock-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.stock-owner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.stock-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+.stock-price-text {
+  font-size: 12px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+@media (max-width: 480px) {
+  .stock-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .stock-detail-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stock-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .stock-item-header > div:last-child {
+    align-self: flex-end;
+  }
+}
