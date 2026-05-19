@@ -98,7 +98,7 @@ export default function StocksPage() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: showForm ? 16 : 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           {[
             { label: '매입금액',  value: `${fmt(Math.round(totalPurchase))}원`, color: 'var(--text-primary)' },
             { label: '평가금액',  value: `${fmt(Math.round(totalCurrent))}원`,  color: 'var(--text-primary)' },
@@ -111,9 +111,15 @@ export default function StocksPage() {
           ))}
         </div>
 
-        {/* 종목 추가/수정 폼 */}
+        {/* 종목 추가/수정 팝업 */}
         {showForm && (
-          <form onSubmit={handleSubmit} style={{ background: 'var(--bg)', borderRadius: 10, padding: 16, marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="modal-overlay" onClick={handleCancel}>
+            <div className="modal" style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2 style={{ margin: 0 }}>{editId ? '종목 수정' : '종목 추가'}</h2>
+                <button onClick={handleCancel} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+              </div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div className="form-row">
                 <label>소유자</label>
@@ -146,6 +152,8 @@ export default function StocksPage() {
               <button type="submit" className="btn primary" disabled={submitting}>{submitting ? '저장 중...' : editId ? '수정' : '추가'}</button>
             </div>
           </form>
+            </div>
+          </div>
         )}
       </div>
 
