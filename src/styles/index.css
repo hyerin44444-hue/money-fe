@@ -1691,4 +1691,7 @@ button { cursor: pointer; font-family: inherit; }
   .stock-item-header > div:last-child {
     align-self: flex-end;
   }
+  .stock-form-grid {
+    grid-template-columns: 1fr !important;
+  }
 }

@@ -120,7 +120,7 @@ export default function StocksPage() {
                 <button onClick={handleCancel} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
               </div>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="stock-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div className="form-row">
                 <label>소유자</label>
                 <input placeholder="예) 박혜린" value={form.owner} onChange={(e) => setForm(p => ({ ...p, owner: e.target.value }))} />
