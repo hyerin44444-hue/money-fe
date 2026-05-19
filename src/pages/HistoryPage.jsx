@@ -12,6 +12,7 @@ export default function HistoryPage() {
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
   const [fixedNames, setFixedNames] = useState(new Set())
+  const [selectedCategory, setSelectedCategory] = useState('전체')
 
   useEffect(() => {
     getFixedExpenses().then((res) => setFixedNames(new Set(res.data.map((f) => f.name))))
@@ -23,7 +24,10 @@ export default function HistoryPage() {
     addTransaction, editTransaction, removeTransaction, refresh,
   } = useTransactions(year, month)
 
-  const filtered = transactions
+  const categoryOptions = ['전체', ...Array.from(new Set(transactions.map((t) => t.category))).sort()]
+  const filtered = selectedCategory === '전체'
+    ? transactions
+    : transactions.filter((t) => t.category === selectedCategory)
 
   const handleEdit = (tx) => { setEditTarget(tx); setShowForm(true) }
   const handleDelete = async (id) => {
@@ -85,9 +89,21 @@ export default function HistoryPage() {
       {/* 메시지 파서 */}
       <MessageParser categories={categories} onSubmit={addTransaction} />
 
-      {/* 버튼 */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span className="count">{filtered.length}건</span>
+      {/* 카테고리 필터 + 버튼 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            style={{
+              border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px',
+              fontSize: 13, color: 'var(--text-primary)', background: 'var(--white)', cursor: 'pointer',
+            }}
+          >
+            {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <span className="count">{filtered.length}건</span>
+        </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn secondary" onClick={handleExportCSV}>📥 CSV</button>
           <button className="btn secondary" onClick={handleApplyFixed}>📌 고정비 반영</button>
