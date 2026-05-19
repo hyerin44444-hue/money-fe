@@ -90,7 +90,12 @@ export default function StocksPage() {
       <div className="card card-section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h2 style={{ margin: 0, fontSize: 16 }}>주식 포트폴리오</h2>
-          <button className="btn primary" onClick={() => { setShowForm(true); setEditId(null); setForm(EMPTY_FORM) }}>+ 종목 추가</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn secondary" onClick={fetchStocks} disabled={loading} style={{ fontSize: 13 }}>
+              {loading ? '조회 중...' : '🔄 새로고침'}
+            </button>
+            <button className="btn primary" onClick={() => { setShowForm(true); setEditId(null); setForm(EMPTY_FORM) }}>+ 종목 추가</button>
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: showForm ? 16 : 0 }}>
