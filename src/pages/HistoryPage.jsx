@@ -29,6 +29,10 @@ export default function HistoryPage() {
     ? transactions
     : transactions.filter((t) => t.category === selectedCategory)
 
+  const totalIncome  = filtered.filter((t) => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
+  const totalExpense = filtered.filter((t) => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
+  const fmt = (n) => Number(n).toLocaleString('ko-KR')
+
   const handleEdit = (tx) => { setEditTarget(tx); setShowForm(true) }
   const handleDelete = async (id) => {
     if (!confirm('삭제하시겠습니까?')) return
@@ -91,7 +95,7 @@ export default function HistoryPage() {
 
       {/* 카테고리 필터 + 버튼 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -103,6 +107,16 @@ export default function HistoryPage() {
             {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
           <span className="count">{filtered.length}건</span>
+          {totalIncome > 0 && (
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#1e88e5' }}>
+              수입 +{fmt(totalIncome)}원
+            </span>
+          )}
+          {totalExpense > 0 && (
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--red)' }}>
+              지출 -{fmt(totalExpense)}원
+            </span>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn secondary" onClick={handleExportCSV}>📥 CSV</button>
