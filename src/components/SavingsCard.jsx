@@ -7,7 +7,7 @@ export default function SavingsCard() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', amount: '', date: dayjs().format('YYYY-MM-DD') })
   const [submitting, setSubmitting] = useState(false)
-  const [expandedName, setExpandedName] = useState(null)
+  const [expandedNames, setExpandedNames] = useState(new Set())
 
   const fetchSavings = async () => {
     const res = await getSavings()
@@ -88,7 +88,11 @@ export default function SavingsCard() {
           <div key={group.name} className="savings-group">
             <div
               className="savings-group-header"
-              onClick={() => setExpandedName(expandedName === group.name ? null : group.name)}
+              onClick={() => setExpandedNames((prev) => {
+                const next = new Set(prev)
+                next.has(group.name) ? next.delete(group.name) : next.add(group.name)
+                return next
+              })}
             >
               <div className="savings-group-info">
                 <span className="savings-group-name">{group.name}</span>
@@ -96,11 +100,11 @@ export default function SavingsCard() {
               </div>
               <div className="savings-group-right">
                 <span className="savings-group-total">{fmt(group.total)}</span>
-                <span className="savings-chevron">{expandedName === group.name ? '▲' : '▼'}</span>
+                <span className="savings-chevron">{expandedNames.has(group.name) ? '▲' : '▼'}</span>
               </div>
             </div>
 
-            {expandedName === group.name && (
+            {expandedNames.has(group.name) && (
               <div className="savings-records">
                 {group.records.map((r) => (
                   <div key={r.id} className="savings-record">
