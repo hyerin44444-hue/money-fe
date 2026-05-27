@@ -282,6 +282,12 @@ export default function StocksPage() {
                                       style={{ width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid var(--border)', fontSize: 13 }} />
                                   </div>
                                 </div>
+                                {parseFloat(addQty) > 0 && parseFloat(addPrice) > 0 && (
+                                  <div style={{ marginBottom: 10, padding: '8px 12px', background: '#fff', borderRadius: 7, border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>추가 매수 필요금액</span>
+                                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{fmt(Math.round(parseFloat(addQty) * parseFloat(addPrice)))}원</span>
+                                  </div>
+                                )}
                                 {result ? (
                                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
                                     {[
