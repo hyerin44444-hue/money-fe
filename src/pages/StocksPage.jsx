@@ -5,7 +5,7 @@ const EMPTY_FORM = { name: '', ticker: '', quantity: '', avg_price: '', owner: '
 
 const fmt = (n) => n == null ? '-' : Number(n).toLocaleString('ko-KR')
 const fmtRate = (r) => r == null ? '-' : `${r > 0 ? '+' : ''}${r.toFixed(2)}%`
-const profitColor = (p) => p == null ? 'var(--text-muted)' : p >= 0 ? 'var(--green)' : 'var(--red)'
+const profitColor = (p) => p == null ? 'var(--text-muted)' : p >= 0 ? 'var(--stock-up)' : 'var(--stock-down)'
 
 export default function StocksPage() {
   const [stocks, setStocks] = useState([])
