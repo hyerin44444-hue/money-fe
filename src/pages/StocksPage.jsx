@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getStocks, createStock, updateStock, deleteStock } from '../api/client'
 
 const EMPTY_FORM = { name: '', ticker: '', quantity: '', avg_price: '', owner: '', account_type: '' }
+const EMPTY_CALC = { selectedId: '', curQty: '', curAvg: '', addQty: '', addPrice: '' }
 
 const fmt = (n) => n == null ? '-' : Number(n).toLocaleString('ko-KR')
 const fmtRate = (r) => r == null ? '-' : `${r > 0 ? '+' : ''}${r.toFixed(2)}%`
@@ -15,6 +16,8 @@ export default function StocksPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [showCalc, setShowCalc] = useState(false)
+  const [calc, setCalc] = useState(EMPTY_CALC)
 
   const fetchStocks = async () => {
     setLoading(true)
@@ -83,6 +86,27 @@ export default function StocksPage() {
     setForm(EMPTY_FORM); setEditId(null); setShowForm(false); setError('')
   }
 
+  const handleCalcSelect = (e) => {
+    const id = e.target.value
+    const st = stocks.find((s) => String(s.id) === id)
+    setCalc(st
+      ? { selectedId: id, curQty: String(st.quantity), curAvg: String(st.avg_price), addQty: '', addPrice: '' }
+      : { ...EMPTY_CALC, selectedId: id }
+    )
+  }
+
+  const calcResult = (() => {
+    const cq = parseFloat(calc.curQty)
+    const ca = parseFloat(calc.curAvg)
+    const aq = parseFloat(calc.addQty)
+    const ap = parseFloat(calc.addPrice)
+    if (!cq || !ca || !aq || !ap || cq <= 0 || ca <= 0 || aq <= 0 || ap <= 0) return null
+    const totalQty = cq + aq
+    const totalCost = cq * ca + aq * ap
+    const newAvg = totalCost / totalQty
+    return { totalQty, totalCost, newAvg }
+  })()
+
   return (
     <div className="page">
 
@@ -93,6 +117,9 @@ export default function StocksPage() {
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn secondary" onClick={fetchStocks} disabled={loading} style={{ fontSize: 13 }}>
               {loading ? '조회 중...' : '🔄 새로고침'}
+            </button>
+            <button className="btn secondary" style={{ fontSize: 13 }} onClick={() => setShowCalc((p) => !p)}>
+              📉 물타기 계산
             </button>
             <button className="btn primary" onClick={() => { setShowForm(true); setEditId(null); setForm(EMPTY_FORM) }}>+ 종목 추가</button>
           </div>
@@ -110,6 +137,64 @@ export default function StocksPage() {
             </div>
           ))}
         </div>
+
+        {/* 물타기 계산기 */}
+        {showCalc && (
+          <div style={{ marginTop: 16, background: 'var(--bg)', borderRadius: 12, padding: 16, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <span style={{ fontWeight: 700, fontSize: 14 }}>📉 물타기 계산기</span>
+              <button onClick={() => { setShowCalc(false); setCalc(EMPTY_CALC) }} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+            </div>
+
+            {stocks.length > 0 && (
+              <div className="form-row" style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>보유 종목에서 불러오기</label>
+                <select value={calc.selectedId} onChange={handleCalcSelect} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff' }}>
+                  <option value="">직접 입력</option>
+                  {stocks.map((st) => (
+                    <option key={st.id} value={st.id}>{st.name} ({st.ticker})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+              {[
+                { label: '현재 보유수량 (주)', key: 'curQty', placeholder: '100' },
+                { label: '현재 평균매입가 (원)', key: 'curAvg', placeholder: '50,000' },
+                { label: '추가 매수수량 (주)', key: 'addQty', placeholder: '50' },
+                { label: '추가 매수가 (원)', key: 'addPrice', placeholder: '40,000' },
+              ].map(({ label, key, placeholder }) => (
+                <div key={key}>
+                  <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>{label}</label>
+                  <input
+                    type="number" min="0" step="any" placeholder={placeholder}
+                    value={calc[key]}
+                    onChange={(e) => setCalc((p) => ({ ...p, selectedId: key === 'curQty' || key === 'curAvg' ? '' : p.selectedId, [key]: e.target.value }))}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {calcResult ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                {[
+                  { label: '새 평균매입가', value: `${fmt(Math.round(calcResult.newAvg))}원`, highlight: true },
+                  { label: '총 보유수량', value: `${calcResult.totalQty}주` },
+                  { label: '총 투자금액', value: `${fmt(Math.round(calcResult.totalCost))}원` },
+                ].map(({ label, value, highlight }) => (
+                  <div key={label} style={{ background: highlight ? 'var(--accent)' : '#fff', borderRadius: 8, padding: '10px 12px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                    <div style={{ fontSize: 10, color: highlight ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)', marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: highlight ? '#fff' : 'var(--text-primary)' }}>{value}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, padding: '10px 0' }}>수량과 가격을 입력하면 결과가 나와요</div>
+            )}
+          </div>
+        )}
 
         {/* 종목 추가/수정 팝업 */}
         {showForm && (
