@@ -246,6 +246,7 @@ export default function StocksPage() {
                             {[
                               { label: '보유수량',   value: `${st.quantity}주` },
                               { label: '평균매입가', value: st.currency === 'USD' ? `$${st.avg_price.toLocaleString()}` : `${fmt(Math.round(st.avg_price))}원` },
+                              { label: '투자금액',   value: `${fmt(Math.round(st.quantity * st.avg_price))}원` },
                               { label: '현재가',     value: st.current_price ? (st.currency === 'USD' ? `$${st.current_price.toFixed(2)}` : `${fmt(Math.round(st.current_price))}원`) : '조회 실패' },
                               { label: '평가금액',   value: st.current_value ? `${fmt(Math.round(st.current_value))}원` : '-' },
                             ].map(({ label, value }) => (
