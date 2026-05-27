@@ -250,9 +250,9 @@ export default function StocksPage() {
                               { label: '현재가',     value: st.current_price ? (st.currency === 'USD' ? `$${st.current_price.toFixed(2)}` : `${fmt(Math.round(st.current_price))}원`) : '조회 실패' },
                               { label: '평가금액',   value: st.current_value ? `${fmt(Math.round(st.current_value))}원` : '-' },
                             ].map(({ label, value }) => (
-                              <div key={label} style={{ background: 'var(--bg)', borderRadius: 6, padding: '6px 8px' }}>
-                                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>{label}</div>
-                                <div className="stock-price-text">{value}</div>
+                              <div key={label} style={{ background: 'var(--bg)', borderRadius: 6, padding: '5px 6px' }}>
+                                <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 2 }}>{label}</div>
+                                <div className="stock-price-text" style={{ fontSize: 12 }}>{value}</div>
                               </div>
                             ))}
                           </div>
