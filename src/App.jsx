@@ -37,7 +37,7 @@ export default function App() {
       <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-logo">
           <img src={siIcon} alt="logo" style={{ width: 35, height: 35, borderRadius: 6, objectFit: 'cover' }} />
-          <span className="logo-text">가계부</span>
+          <span className="logo-text">시혀니네 가계부</span>
           <button className="sidebar-close-btn" onClick={closeSidebar}>✕</button>
         </div>
 
