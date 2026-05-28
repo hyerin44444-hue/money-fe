@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
 
 function DayModal({ date, transactions, onClose }) {
@@ -53,13 +53,20 @@ function DayModal({ date, transactions, onClose }) {
 
 export default function MonthCalendar({ year, month, transactions }) {
   const [selectedDay, setSelectedDay] = useState(null)
+  const [filterCategory, setFilterCategory] = useState('전체')
+
+  const categories = ['전체', ...Array.from(new Set(transactions.map((t) => t.category))).sort()]
+
+  useEffect(() => { setFilterCategory('전체') }, [year, month])
+
+  const filtered = filterCategory === '전체' ? transactions : transactions.filter((t) => t.category === filterCategory)
 
   const firstDay = dayjs(`${year}-${month}-01`)
   const daysInMonth = firstDay.daysInMonth()
   const startWeekday = firstDay.day()
 
   const byDate = {}
-  transactions.forEach((t) => {
+  filtered.forEach((t) => {
     const d = dayjs(t.date).date()
     if (!byDate[d]) byDate[d] = { income: 0, expense: 0 }
     if (t.type === 'income') byDate[d].income += Number(t.amount)
@@ -83,7 +90,7 @@ export default function MonthCalendar({ year, month, transactions }) {
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
 
   const selectedTxs = selectedDay
-    ? transactions.filter((t) => dayjs(t.date).date() === selectedDay)
+    ? filtered.filter((t) => dayjs(t.date).date() === selectedDay)
     : []
 
   return (
@@ -91,6 +98,19 @@ export default function MonthCalendar({ year, month, transactions }) {
       <div className="calendar-card">
         <div className="calendar-header">
           <span className="calendar-title">{year}년 {month}월 달력</span>
+        </div>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilterCategory(cat)}
+              className={`btn ${filterCategory === cat ? 'primary' : 'secondary'}`}
+              style={{ padding: '3px 10px', fontSize: 12 }}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
 
         <div className="calendar-grid">
