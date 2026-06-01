@@ -37,6 +37,19 @@ export default function SavingsCard() {
   const grandTotal = savings.reduce((s, g) => s + g.total, 0)
   const fmt = (n) => Number(n).toLocaleString('ko-KR') + '원'
 
+  const monthlyData = (() => {
+    const map = {}
+    savings.forEach((g) => {
+      g.records.forEach((r) => {
+        const month = dayjs(r.date).format('YYYY년 MM월')
+        if (!map[month]) map[month] = { total: 0, breakdown: {} }
+        map[month].total += r.amount
+        map[month].breakdown[g.name] = (map[month].breakdown[g.name] || 0) + r.amount
+      })
+    })
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]))
+  })()
+
   return (
     <div className="savings-card">
       <div className="savings-header">
@@ -81,6 +94,31 @@ export default function SavingsCard() {
 
       {savings.length === 0 && !showForm && (
         <p className="savings-empty">등록된 적금이 없습니다. 입금 버튼을 눌러 추가하세요.</p>
+      )}
+
+      {monthlyData.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8 }}>📅 월별 입금 현황</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {monthlyData.map(([month, data]) => (
+              <div key={month} style={{ background: 'var(--bg)', borderRadius: 10, padding: '10px 14px', border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: Object.keys(data.breakdown).length > 1 ? 6 : 0 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>{month}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)' }}>{fmt(data.total)}</span>
+                </div>
+                {Object.keys(data.breakdown).length > 1 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
+                    {Object.entries(data.breakdown).map(([name, amount]) => (
+                      <span key={name} style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                        {name} {fmt(amount)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="savings-list">
