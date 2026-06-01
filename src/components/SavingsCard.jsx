@@ -102,19 +102,17 @@ export default function SavingsCard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {monthlyData.map(([month, data]) => (
               <div key={month} style={{ background: 'var(--bg)', borderRadius: 10, padding: '10px 14px', border: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: Object.keys(data.breakdown).length > 1 ? 6 : 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>{month}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)' }}>{fmt(data.total)}</span>
                 </div>
-                {Object.keys(data.breakdown).length > 1 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
-                    {Object.entries(data.breakdown).map(([name, amount]) => (
-                      <span key={name} style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                        {name} {fmt(amount)}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
+                  {Object.entries(data.breakdown).map(([name, amount]) => (
+                    <span key={name} style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                      {name} {fmt(amount)}
+                    </span>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
