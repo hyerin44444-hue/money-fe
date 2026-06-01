@@ -47,6 +47,12 @@ export const createStock = (data) => api.post('/stocks', data)
 export const updateStock = (id, data) => api.put(`/stocks/${id}`, data)
 export const deleteStock = (id) => api.delete(`/stocks/${id}`)
 
+// 메모
+export const getMemos = (year, month) => api.get('/memos', { params: { year, month } })
+export const createMemo = (data) => api.post('/memos', data)
+export const updateMemo = (id, data) => api.patch(`/memos/${id}`, data)
+export const deleteMemo = (id) => api.delete(`/memos/${id}`)
+
 // 고정비
 export const getFixedExpenses = () => api.get('/fixed-expenses')
 export const createFixedExpense = (data) => api.post('/fixed-expenses', data)

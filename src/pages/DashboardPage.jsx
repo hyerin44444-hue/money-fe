@@ -7,6 +7,7 @@ import MonthCalendar from '../components/MonthCalendar'
 import PeriodChart from '../components/PeriodChart'
 import BudgetStatus from '../components/BudgetStatus'
 import MonthlyOverview from '../components/MonthlyOverview'
+import MonthMemo from '../components/MonthMemo'
 
 const PIE_COLORS = [
   '#4f86f7', '#f7764f', '#4fc3f7', '#f7c44f', '#a5d6a7',
@@ -139,6 +140,9 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* 이번달 메모 */}
+      <MonthMemo year={year} month={month} />
 
       {/* 월별 달력 */}
       <MonthCalendar year={year} month={month} transactions={transactions} />
