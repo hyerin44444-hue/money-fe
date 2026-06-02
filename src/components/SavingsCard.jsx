@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
-import { getSavings, addSavings, deleteSavings, getSavingsGoal, upsertSavingsGoal, deleteSavingsGoal } from '../api/client'
+import { getSavings, addSavings, deleteSavings } from '../api/client'
 
-const EMPTY_GOAL_FORM = { startYear: '', startMonth: '', endYear: '', endMonth: '', target: '5000000' }
+const GOAL_TARGET = 5_000_000
+const THIS_YEAR = dayjs().year()
 
 export default function SavingsCard() {
   const [savings, setSavings] = useState([])
@@ -10,21 +11,13 @@ export default function SavingsCard() {
   const [form, setForm] = useState({ name: '', amount: '', date: dayjs().format('YYYY-MM-DD') })
   const [submitting, setSubmitting] = useState(false)
   const [expandedNames, setExpandedNames] = useState(new Set())
-  const [showGoalForm, setShowGoalForm] = useState(false)
-  const [goal, setGoal] = useState(null)
-  const [goalForm, setGoalForm] = useState(EMPTY_GOAL_FORM)
 
   const fetchSavings = async () => {
     const res = await getSavings()
     setSavings(res.data)
   }
 
-  const fetchGoal = async () => {
-    const res = await getSavingsGoal()
-    setGoal(res.data || null)
-  }
-
-  useEffect(() => { fetchSavings(); fetchGoal() }, [])
+  useEffect(() => { fetchSavings() }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -44,39 +37,9 @@ export default function SavingsCard() {
     await fetchSavings()
   }
 
-  const handleSaveGoal = async (e) => {
-    e.preventDefault()
-    const data = {
-      start_year: parseInt(goalForm.startYear),
-      start_month: parseInt(goalForm.startMonth),
-      end_year: parseInt(goalForm.endYear),
-      end_month: parseInt(goalForm.endMonth),
-      target: parseFloat(goalForm.target),
-    }
-    const res = await upsertSavingsGoal(data)
-    setGoal(res.data)
-    setShowGoalForm(false)
-  }
-
-  const handleEditGoal = () => {
-    if (goal) setGoalForm({
-      startYear: String(goal.start_year), startMonth: String(goal.start_month),
-      endYear: String(goal.end_year), endMonth: String(goal.end_month),
-      target: String(goal.target),
-    })
-    setShowGoalForm(true)
-  }
-
-  const handleDeleteGoal = async () => {
-    await deleteSavingsGoal()
-    setGoal(null)
-    setShowGoalForm(false)
-  }
-
   const grandTotal = savings.reduce((s, g) => s + g.total, 0)
   const fmt = (n) => Number(n).toLocaleString('ko-KR') + '원'
 
-  // 월별 맵 (key: "YYYY년 MM월")
   const monthlyMap = {}
   savings.forEach((g) => {
     g.records.forEach((r) => {
@@ -88,25 +51,13 @@ export default function SavingsCard() {
   })
   const monthlyData = Object.entries(monthlyMap).sort((a, b) => b[0].localeCompare(a[0]))
 
-  // 목표 달성 현황
-  const goalMonths = (() => {
-    if (!goal) return []
-    const list = []
-    let y = goal.start_year, m = goal.start_month
-    while (y < goal.end_year || (y === goal.end_year && m <= goal.end_month)) {
-      const key = `${y}년 ${String(m).padStart(2, '0')}월`
-      const actual = monthlyMap[key]?.total || 0
-      list.push({ key, actual, achieved: actual >= goal.target })
-      if (m === 12) { y++; m = 1 } else m++
-    }
-    return list
-  })()
-
+  const goalMonths = Array.from({ length: 12 }, (_, i) => {
+    const m = i + 1
+    const key = `${THIS_YEAR}년 ${String(m).padStart(2, '0')}월`
+    const actual = monthlyMap[key]?.total || 0
+    return { key, actual, achieved: actual >= GOAL_TARGET }
+  })
   const achievedCount = goalMonths.filter((m) => m.achieved).length
-  const totalMonths = goalMonths.length
-
-  const years = Array.from({ length: 5 }, (_, i) => dayjs().year() - 2 + i)
-  const months = Array.from({ length: 12 }, (_, i) => i + 1)
 
   return (
     <div className="savings-card">
@@ -115,115 +66,10 @@ export default function SavingsCard() {
           <span className="savings-title">💰 적금 현황</span>
           <span className="savings-grand-total">{fmt(grandTotal)}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn secondary" onClick={handleEditGoal} style={{ fontSize: 13 }}>🎯 목표</button>
-          <button className="btn primary" onClick={() => setShowForm((p) => !p)}>
-            {showForm ? '닫기' : '+ 입금'}
-          </button>
-        </div>
+        <button className="btn primary" onClick={() => setShowForm((p) => !p)}>
+          {showForm ? '닫기' : '+ 입금'}
+        </button>
       </div>
-
-      {/* 목표 설정 폼 */}
-      {showGoalForm && (
-        <div style={{ marginBottom: 16, padding: 14, background: 'var(--bg)', borderRadius: 12, border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 14 }}>🎯 목표 설정</span>
-            <button onClick={() => setShowGoalForm(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
-          </div>
-          <form onSubmit={handleSaveGoal} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div>
-                <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 3 }}>시작 연도</label>
-                <select value={goalForm.startYear} onChange={(e) => setGoalForm((p) => ({ ...p, startYear: e.target.value }))} required style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }}>
-                  <option value="">연도</option>
-                  {years.map((y) => <option key={y} value={y}>{y}년</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 3 }}>시작 월</label>
-                <select value={goalForm.startMonth} onChange={(e) => setGoalForm((p) => ({ ...p, startMonth: e.target.value }))} required style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }}>
-                  <option value="">월</option>
-                  {months.map((m) => <option key={m} value={m}>{m}월</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 3 }}>종료 연도</label>
-                <select value={goalForm.endYear} onChange={(e) => setGoalForm((p) => ({ ...p, endYear: e.target.value }))} required style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }}>
-                  <option value="">연도</option>
-                  {years.map((y) => <option key={y} value={y}>{y}년</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 3 }}>종료 월</label>
-                <select value={goalForm.endMonth} onChange={(e) => setGoalForm((p) => ({ ...p, endMonth: e.target.value }))} required style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }}>
-                  <option value="">월</option>
-                  {months.map((m) => <option key={m} value={m}>{m}월</option>)}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 3 }}>월 목표 금액 (원)</label>
-              <input type="number" min="0" placeholder="예) 500000" value={goalForm.target} onChange={(e) => setGoalForm((p) => ({ ...p, target: e.target.value }))} required
-                style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }} />
-            </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              {goal && <button type="button" className="btn secondary" onClick={handleDeleteGoal} style={{ fontSize: 13, color: 'var(--red)' }}>목표 삭제</button>}
-              <button type="submit" className="btn primary">저장</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* 목표 달성 현황 */}
-      {goal && goalMonths.length > 0 && (
-        <div style={{ marginBottom: 20, padding: 14, background: 'var(--bg)', borderRadius: 12, border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 14 }}>🎯 달성 현황</span>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              월 목표 <strong>{fmt(goal.target)}</strong>
-            </span>
-          </div>
-
-          {/* 요약 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
-            {[
-              { label: '전체 기간', value: `${totalMonths}개월` },
-              { label: '달성', value: `${achievedCount}개월`, color: '#16a34a' },
-              { label: '미달성', value: `${totalMonths - achievedCount}개월`, color: achievedCount < totalMonths ? 'var(--red)' : 'var(--text-muted)' },
-            ].map(({ label, value, color }) => (
-              <div key={label} style={{ background: '#fff', borderRadius: 8, padding: '8px 10px', border: '1px solid var(--border)', textAlign: 'center' }}>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}>{label}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: color || 'var(--text-primary)' }}>{value}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* 월별 목록 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {goalMonths.map(({ key, actual, achieved }) => {
-              const pct = Math.min((actual / goal.target) * 100, 100)
-              return (
-                <div key={key} style={{ background: '#fff', borderRadius: 8, padding: '8px 12px', border: `1px solid ${achieved ? '#bbf7d0' : '#fecaca'}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 13 }}>{achieved ? '✅' : '❌'}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600 }}>{key}</span>
-                    </div>
-                    <span style={{ fontSize: 12, color: achieved ? '#16a34a' : 'var(--red)', fontWeight: 700 }}>
-                      {fmt(actual)}
-                      {!achieved && actual > 0 && <span style={{ fontWeight: 400, color: 'var(--text-muted)', marginLeft: 4 }}>(-{fmt(goal.target - actual)})</span>}
-                      {actual === 0 && <span style={{ fontWeight: 400, color: 'var(--text-muted)', marginLeft: 4 }}>(미입금)</span>}
-                    </span>
-                  </div>
-                  <div style={{ height: 4, background: 'var(--border)', borderRadius: 4, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: achieved ? '#22c55e' : '#f87171', borderRadius: 4, transition: 'width 0.3s' }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
 
       {showForm && (
         <form className="savings-form" onSubmit={handleSubmit}>
@@ -246,6 +92,42 @@ export default function SavingsCard() {
         <p className="savings-empty">등록된 적금이 없습니다. 입금 버튼을 눌러 추가하세요.</p>
       )}
 
+      {/* 올해 달성 현황 */}
+      <div style={{ marginBottom: 20, padding: 14, background: 'var(--bg)', borderRadius: 12, border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontWeight: 700, fontSize: 14 }}>🎯 {THIS_YEAR}년 달성 현황</span>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+            월 목표 <strong>{fmt(GOAL_TARGET)}</strong> · {achievedCount}/12개월
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {goalMonths.map(({ key, actual, achieved }) => {
+            const pct = Math.min((actual / GOAL_TARGET) * 100, 100)
+            return (
+              <div key={key} style={{ background: '#fff', borderRadius: 8, padding: '8px 12px', border: `1px solid ${achieved ? '#bbf7d0' : '#fecaca'}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 13 }}>{achieved ? '✅' : '❌'}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{key}</span>
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: achieved ? '#16a34a' : actual > 0 ? 'var(--red)' : 'var(--text-muted)' }}>
+                    {actual > 0 ? fmt(actual) : '미입금'}
+                    {!achieved && actual > 0 && (
+                      <span style={{ fontWeight: 400, color: 'var(--text-muted)', marginLeft: 4 }}>(-{fmt(GOAL_TARGET - actual)})</span>
+                    )}
+                  </span>
+                </div>
+                <div style={{ height: 4, background: 'var(--border)', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: achieved ? '#22c55e' : pct > 0 ? '#f87171' : 'transparent', borderRadius: 4 }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* 월별 입금 현황 */}
       {monthlyData.length > 0 && (
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8 }}>📅 월별 입금 현황</div>
@@ -284,7 +166,6 @@ export default function SavingsCard() {
                 <span className="savings-chevron">{expandedNames.has(group.name) ? '▲' : '▼'}</span>
               </div>
             </div>
-
             {expandedNames.has(group.name) && (
               <div className="savings-records">
                 {group.records.map((r) => (

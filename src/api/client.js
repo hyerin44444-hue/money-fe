@@ -53,10 +53,6 @@ export const createMemo = (data) => api.post('/memos', data)
 export const updateMemo = (id, data) => api.patch(`/memos/${id}`, data)
 export const deleteMemo = (id) => api.delete(`/memos/${id}`)
 
-// 적금 목표
-export const getSavingsGoal = () => api.get('/savings-goals')
-export const upsertSavingsGoal = (data) => api.post('/savings-goals', data)
-export const deleteSavingsGoal = () => api.delete('/savings-goals')
 
 // 고정비
 export const getFixedExpenses = () => api.get('/fixed-expenses')
