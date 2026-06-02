@@ -110,8 +110,13 @@ export default function SavingsCard() {
                     <span style={{ fontSize: 13 }}>{achieved ? '✅' : actual > 0 ? '❌' : '–'}</span>
                     <span style={{ fontSize: 13, fontWeight: 600 }}>{key}</span>
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: achieved ? '#16a34a' : actual > 0 ? 'var(--red)' : 'var(--text-muted)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: achieved ? '#16a34a' : actual > 0 ? 'var(--red)' : 'var(--text-muted)', textAlign: 'right' }}>
                     {actual > 0 ? fmt(actual) : '미입금'}
+                    {actual > 0 && (
+                      <span style={{ fontWeight: 600, color: achieved ? '#16a34a' : 'var(--text-muted)', marginLeft: 5 }}>
+                        {Math.round(pct)}%
+                      </span>
+                    )}
                     {!achieved && actual > 0 && (
                       <span style={{ fontWeight: 400, color: 'var(--text-muted)', marginLeft: 4 }}>(-{fmt(GOAL_TARGET - actual)})</span>
                     )}
