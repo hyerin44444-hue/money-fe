@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
-import { getSavings, addSavings, deleteSavings } from '../api/client'
+import { getSavings, addSavings, deleteSavings, getSavingsGoal, upsertSavingsGoal, deleteSavingsGoal } from '../api/client'
 
-const GOAL_KEY = 'savings-goal'
-const EMPTY_GOAL = { startYear: '', startMonth: '', endYear: '', endMonth: '', target: '' }
-
-function loadGoal() {
-  try { return JSON.parse(localStorage.getItem(GOAL_KEY)) || null } catch { return null }
-}
+const EMPTY_GOAL_FORM = { startYear: '', startMonth: '', endYear: '', endMonth: '', target: '5000000' }
 
 export default function SavingsCard() {
   const [savings, setSavings] = useState([])
@@ -16,15 +11,20 @@ export default function SavingsCard() {
   const [submitting, setSubmitting] = useState(false)
   const [expandedNames, setExpandedNames] = useState(new Set())
   const [showGoalForm, setShowGoalForm] = useState(false)
-  const [goal, setGoal] = useState(loadGoal)
-  const [goalForm, setGoalForm] = useState(EMPTY_GOAL)
+  const [goal, setGoal] = useState(null)
+  const [goalForm, setGoalForm] = useState(EMPTY_GOAL_FORM)
 
   const fetchSavings = async () => {
     const res = await getSavings()
     setSavings(res.data)
   }
 
-  useEffect(() => { fetchSavings() }, [])
+  const fetchGoal = async () => {
+    const res = await getSavingsGoal()
+    setGoal(res.data || null)
+  }
+
+  useEffect(() => { fetchSavings(); fetchGoal() }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -44,31 +44,31 @@ export default function SavingsCard() {
     await fetchSavings()
   }
 
-  const handleSaveGoal = (e) => {
+  const handleSaveGoal = async (e) => {
     e.preventDefault()
-    const g = {
-      startYear: parseInt(goalForm.startYear),
-      startMonth: parseInt(goalForm.startMonth),
-      endYear: parseInt(goalForm.endYear),
-      endMonth: parseInt(goalForm.endMonth),
+    const data = {
+      start_year: parseInt(goalForm.startYear),
+      start_month: parseInt(goalForm.startMonth),
+      end_year: parseInt(goalForm.endYear),
+      end_month: parseInt(goalForm.endMonth),
       target: parseFloat(goalForm.target),
     }
-    localStorage.setItem(GOAL_KEY, JSON.stringify(g))
-    setGoal(g)
+    const res = await upsertSavingsGoal(data)
+    setGoal(res.data)
     setShowGoalForm(false)
   }
 
   const handleEditGoal = () => {
     if (goal) setGoalForm({
-      startYear: String(goal.startYear), startMonth: String(goal.startMonth),
-      endYear: String(goal.endYear), endMonth: String(goal.endMonth),
+      startYear: String(goal.start_year), startMonth: String(goal.start_month),
+      endYear: String(goal.end_year), endMonth: String(goal.end_month),
       target: String(goal.target),
     })
     setShowGoalForm(true)
   }
 
-  const handleDeleteGoal = () => {
-    localStorage.removeItem(GOAL_KEY)
+  const handleDeleteGoal = async () => {
+    await deleteSavingsGoal()
     setGoal(null)
     setShowGoalForm(false)
   }
@@ -92,8 +92,8 @@ export default function SavingsCard() {
   const goalMonths = (() => {
     if (!goal) return []
     const list = []
-    let y = goal.startYear, m = goal.startMonth
-    while (y < goal.endYear || (y === goal.endYear && m <= goal.endMonth)) {
+    let y = goal.start_year, m = goal.start_month
+    while (y < goal.end_year || (y === goal.end_year && m <= goal.end_month)) {
       const key = `${y}년 ${String(m).padStart(2, '0')}월`
       const actual = monthlyMap[key]?.total || 0
       list.push({ key, actual, achieved: actual >= goal.target })
