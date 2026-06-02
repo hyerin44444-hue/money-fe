@@ -49,8 +49,6 @@ export default function SavingsCard() {
       monthlyMap[key].breakdown[g.name] = (monthlyMap[key].breakdown[g.name] || 0) + r.amount
     })
   })
-  const monthlyData = Object.entries(monthlyMap).sort((a, b) => b[0].localeCompare(a[0]))
-
   const goalMonths = Array.from({ length: 12 }, (_, i) => {
     const m = i + 1
     const key = `${THIS_YEAR}년 ${String(m).padStart(2, '0')}월`
@@ -104,11 +102,12 @@ export default function SavingsCard() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
           {goalMonths.map(({ key, actual, achieved }) => {
             const pct = Math.min((actual / GOAL_TARGET) * 100, 100)
+            const breakdown = monthlyMap[key]?.breakdown || {}
             return (
-              <div key={key} style={{ background: '#fff', borderRadius: 8, padding: '8px 12px', border: `1px solid ${achieved ? '#bbf7d0' : '#fecaca'}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <div key={key} style={{ background: '#fff', borderRadius: 8, padding: '8px 12px', border: `1px solid ${achieved ? '#bbf7d0' : actual > 0 ? '#fecaca' : 'var(--border)'}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: actual > 0 ? 4 : 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 13 }}>{achieved ? '✅' : '❌'}</span>
+                    <span style={{ fontSize: 13 }}>{achieved ? '✅' : actual > 0 ? '❌' : '–'}</span>
                     <span style={{ fontSize: 13, fontWeight: 600 }}>{key}</span>
                   </div>
                   <span style={{ fontSize: 12, fontWeight: 700, color: achieved ? '#16a34a' : actual > 0 ? 'var(--red)' : 'var(--text-muted)' }}>
@@ -118,36 +117,23 @@ export default function SavingsCard() {
                     )}
                   </span>
                 </div>
-                <div style={{ height: 4, background: 'var(--border)', borderRadius: 4, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${pct}%`, background: achieved ? '#22c55e' : pct > 0 ? '#f87171' : 'transparent', borderRadius: 4 }} />
-                </div>
+                {actual > 0 && (
+                  <>
+                    <div style={{ height: 4, background: 'var(--border)', borderRadius: 4, overflow: 'hidden', marginBottom: 4 }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: achieved ? '#22c55e' : '#f87171', borderRadius: 4 }} />
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px' }}>
+                      {Object.entries(breakdown).map(([name, amount]) => (
+                        <span key={name} style={{ fontSize: 11, color: 'var(--text-muted)' }}>{name} {fmt(amount)}</span>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )
           })}
         </div>
       </div>
-
-      {/* 월별 입금 현황 */}
-      {monthlyData.length > 0 && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8 }}>📅 월별 입금 현황</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {monthlyData.map(([month, data]) => (
-              <div key={month} style={{ background: 'var(--bg)', borderRadius: 10, padding: '10px 14px', border: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>{month}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)' }}>{fmt(data.total)}</span>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
-                  {Object.entries(data.breakdown).map(([name, amount]) => (
-                    <span key={name} style={{ fontSize: 11, color: 'var(--text-muted)' }}>{name} {fmt(amount)}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="savings-list">
         {savings.map((group) => (
