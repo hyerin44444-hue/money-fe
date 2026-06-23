@@ -256,12 +256,27 @@ export default function StocksPage() {
                               </div>
                             ))}
                           </div>
-                          <div style={{ marginTop: 6, display: 'flex', gap: 10, fontSize: 12 }}>
-                            <span style={{ color: 'var(--text-secondary)' }}>평가손익</span>
-                            <span style={{ fontWeight: 700, color: profitColor(st.profit) }}>
-                              {st.profit == null ? '-' : `${st.profit >= 0 ? '+' : ''}${fmt(Math.round(st.profit))}원`}
-                            </span>
-                            <span style={{ fontWeight: 700, color: profitColor(st.profit) }}>{fmtRate(st.profit_rate)}</span>
+                          <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                            <div style={{ display: 'flex', gap: 10 }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>평가손익</span>
+                              <span style={{ fontWeight: 700, color: profitColor(st.profit) }}>
+                                {st.profit == null ? '-' : `${st.profit >= 0 ? '+' : ''}${fmt(Math.round(st.profit))}원`}
+                              </span>
+                              <span style={{ fontWeight: 700, color: profitColor(st.profit) }}>{fmtRate(st.profit_rate)}</span>
+                            </div>
+                            {st.day_change_rate != null && (
+                              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                <span style={{ color: 'var(--text-muted)' }}>당일</span>
+                                <span style={{ fontWeight: 700, color: st.day_change_rate >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
+                                  {st.day_change_rate >= 0 ? '+' : ''}{st.day_change_rate.toFixed(2)}%
+                                </span>
+                                {st.day_change_krw != null && (
+                                  <span style={{ color: st.day_change_rate >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
+                                    ({st.day_change_krw >= 0 ? '+' : ''}{fmt(st.day_change_krw)}원)
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
 
                           {calcOpenId === st.id && (() => {
