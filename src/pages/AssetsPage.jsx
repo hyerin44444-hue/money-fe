@@ -277,8 +277,13 @@ export default function AssetsPage() {
                     <div style={{ fontWeight: 700, fontSize: 13, color: '#2563eb' }}>{Number(goldPrice.sell_per_gram).toLocaleString('ko-KR')}원</div>
                   </div>
                   <div style={{ flex: 1, minWidth: 100, background: 'var(--bg)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>국제금가</div>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>${goldPrice.gold_usd_oz}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>전일대비 (g)</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: goldPrice.day_change_rate >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
+                      {goldPrice.day_change_rate >= 0 ? '+' : ''}{goldPrice.day_change_rate}%
+                    </div>
+                    <div style={{ fontSize: 11, color: goldPrice.day_change_per_gram >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
+                      {goldPrice.day_change_per_gram >= 0 ? '+' : ''}{Number(goldPrice.day_change_per_gram).toLocaleString('ko-KR')}원
+                    </div>
                   </div>
                 </div>
               )}
@@ -289,20 +294,26 @@ export default function AssetsPage() {
                     const buyVal = g.grams * g.buy_price_per_gram
                     const profit = currentVal != null ? currentVal - buyVal : null
                     const profitPct = profit != null ? (profit / buyVal) * 100 : null
+                    const dayChange = goldPrice ? g.grams * goldPrice.day_change_per_gram : null
                     return (
                       <div key={g.id} style={{
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                         padding: '8px 10px', background: 'var(--bg)', borderRadius: 8,
                       }}>
                         <div>
-                          <span style={{ fontWeight: 600, fontSize: 13 }}>{g.grams}g</span>
+                          <span style={{ fontWeight: 600, fontSize: 13 }}>{g.grams}g ({(g.grams / 3.75).toFixed(2)}돈)</span>
                           {g.note && <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 6 }}>{g.note}</span>}
                           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
                             매입 {Number(g.buy_price_per_gram).toLocaleString('ko-KR')}원/g · {g.date}
                           </div>
+                          {dayChange != null && (
+                            <div style={{ fontSize: 11, marginTop: 1, color: dayChange >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
+                              전일대비 {dayChange >= 0 ? '+' : ''}{fmt(Math.round(dayChange))} ({goldPrice.day_change_rate >= 0 ? '+' : ''}{goldPrice.day_change_rate}%)
+                            </div>
+                          )}
                           {profit != null && (
                             <div style={{ fontSize: 11, marginTop: 1, color: profit >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
-                              {profit >= 0 ? '+' : ''}{fmt(Math.round(profit))} ({profitPct >= 0 ? '+' : ''}{profitPct.toFixed(2)}%)
+                              총손익 {profit >= 0 ? '+' : ''}{fmt(Math.round(profit))} ({profitPct >= 0 ? '+' : ''}{profitPct.toFixed(2)}%)
                             </div>
                           )}
                         </div>
