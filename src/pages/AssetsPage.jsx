@@ -85,7 +85,12 @@ export default function AssetsPage() {
     e.preventDefault()
     setGoldSubmitting(true)
     try {
-      const data = { ...goldForm, grams: parseFloat(goldForm.grams), buy_price_per_gram: parseFloat(goldForm.buy_price_per_gram) }
+      // 입력값은 원/돈 기준 → 저장은 원/g (÷3.75)
+      const data = {
+        ...goldForm,
+        grams: parseFloat(goldForm.grams),
+        buy_price_per_gram: parseFloat(goldForm.buy_price_per_gram) / 3.75,
+      }
       if (goldEditId) await updateGold(goldEditId, data)
       else await createGold(data)
       setGoldForm(EMPTY_GOLD_FORM); setGoldEditId(null); setShowGoldForm(false)
@@ -94,7 +99,8 @@ export default function AssetsPage() {
   }
 
   const handleGoldEdit = (g) => {
-    setGoldForm({ grams: String(g.grams), buy_price_per_gram: String(g.buy_price_per_gram), note: g.note || '', date: g.date })
+    // DB는 원/g → 폼에는 원/돈으로 역변환 (×3.75)
+    setGoldForm({ grams: String(g.grams), buy_price_per_gram: String(Math.round(g.buy_price_per_gram * 3.75)), note: g.note || '', date: g.date })
     setGoldEditId(g.id); setShowGoldForm(true)
   }
 
@@ -269,21 +275,16 @@ export default function AssetsPage() {
               {goldPrice && (
                 <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 100, background: 'var(--bg)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>살때 (g)</div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: '#ef4444' }}>{Number(goldPrice.buy_per_gram).toLocaleString('ko-KR')}원</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>살때 (1돈)</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: '#ef4444' }}>{Number(Math.round(goldPrice.buy_per_gram * 3.75)).toLocaleString('ko-KR')}원</div>
                   </div>
                   <div style={{ flex: 1, minWidth: 100, background: 'var(--bg)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>팔때 (g)</div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: '#2563eb' }}>{Number(goldPrice.sell_per_gram).toLocaleString('ko-KR')}원</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>팔때 (1돈)</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: '#2563eb' }}>{Number(Math.round(goldPrice.sell_per_gram * 3.75)).toLocaleString('ko-KR')}원</div>
                   </div>
                   <div style={{ flex: 1, minWidth: 100, background: 'var(--bg)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>전일대비 (g)</div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: goldPrice.day_change_rate >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
-                      {goldPrice.day_change_rate >= 0 ? '+' : ''}{goldPrice.day_change_rate}%
-                    </div>
-                    <div style={{ fontSize: 11, color: goldPrice.day_change_per_gram >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
-                      {goldPrice.day_change_per_gram >= 0 ? '+' : ''}{Number(goldPrice.day_change_per_gram).toLocaleString('ko-KR')}원
-                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>국제금가</div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>${goldPrice.gold_usd_oz}</div>
                   </div>
                 </div>
               )}
@@ -294,7 +295,6 @@ export default function AssetsPage() {
                     const buyVal = g.grams * g.buy_price_per_gram
                     const profit = currentVal != null ? currentVal - buyVal : null
                     const profitPct = profit != null ? (profit / buyVal) * 100 : null
-                    const dayChange = goldPrice ? g.grams * goldPrice.day_change_per_gram : null
                     return (
                       <div key={g.id} style={{
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -304,16 +304,11 @@ export default function AssetsPage() {
                           <span style={{ fontWeight: 600, fontSize: 13 }}>{g.grams}g ({(g.grams / 3.75).toFixed(2)}돈)</span>
                           {g.note && <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 6 }}>{g.note}</span>}
                           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
-                            매입 {Number(g.buy_price_per_gram).toLocaleString('ko-KR')}원/g · {g.date}
+                            매입 {Number(Math.round(g.buy_price_per_gram * 3.75)).toLocaleString('ko-KR')}원/돈 · {g.date}
                           </div>
-                          {dayChange != null && (
-                            <div style={{ fontSize: 11, marginTop: 1, color: dayChange >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
-                              전일대비 {dayChange >= 0 ? '+' : ''}{fmt(Math.round(dayChange))} ({goldPrice.day_change_rate >= 0 ? '+' : ''}{goldPrice.day_change_rate}%)
-                            </div>
-                          )}
                           {profit != null && (
                             <div style={{ fontSize: 11, marginTop: 1, color: profit >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
-                              총손익 {profit >= 0 ? '+' : ''}{fmt(Math.round(profit))} ({profitPct >= 0 ? '+' : ''}{profitPct.toFixed(2)}%)
+                              {profit >= 0 ? '+' : ''}{fmt(Math.round(profit))} ({profitPct >= 0 ? '+' : ''}{profitPct.toFixed(2)}%)
                             </div>
                           )}
                         </div>
@@ -362,8 +357,8 @@ export default function AssetsPage() {
                   onChange={(e) => setGoldForm(p => ({ ...p, grams: e.target.value }))} required />
               </div>
               <div className="form-row">
-                <label>매입가 (원/g)</label>
-                <input type="number" placeholder="매입 당시 그램당 가격" min="0"
+                <label>매입가 (원/돈)</label>
+                <input type="number" placeholder="예) 200000" min="0"
                   value={goldForm.buy_price_per_gram}
                   onChange={(e) => setGoldForm(p => ({ ...p, buy_price_per_gram: e.target.value }))} required />
               </div>
