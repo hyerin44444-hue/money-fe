@@ -199,6 +199,11 @@ export default function AssetsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 20 }}>{icon}</span>
               <span style={{ fontSize: 15, fontWeight: 700 }}>{label}</span>
+              {label === '금' && goldList.length > 0 && (
+                <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}>
+                  {(goldList.reduce((s, g) => s + g.grams, 0) / 3.75).toFixed(2)}돈
+                </span>
+              )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 18, fontWeight: 700, color }}>
