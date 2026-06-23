@@ -61,6 +61,23 @@ export const createGold = (data) => api.post('/gold', data)
 export const updateGold = (id, data) => api.put(`/gold/${id}`, data)
 export const deleteGold = (id) => api.delete(`/gold/${id}`)
 
+// 시현 자산
+export const getSihyeonSavings = () => api.get('/sihyeon/savings')
+export const addSihyeonSavings = (data) => api.post('/sihyeon/savings', data)
+export const deleteSihyeonSavings = (id) => api.delete(`/sihyeon/savings/${id}`)
+export const getSihyeonStocks = () => api.get('/sihyeon/stocks')
+export const createSihyeonStock = (data) => api.post('/sihyeon/stocks', data)
+export const updateSihyeonStock = (id, data) => api.put(`/sihyeon/stocks/${id}`, data)
+export const deleteSihyeonStock = (id) => api.delete(`/sihyeon/stocks/${id}`)
+export const getSihyeonCash = () => api.get('/sihyeon/cash')
+export const createSihyeonCash = (data) => api.post('/sihyeon/cash', data)
+export const updateSihyeonCash = (id, data) => api.put(`/sihyeon/cash/${id}`, data)
+export const deleteSihyeonCash = (id) => api.delete(`/sihyeon/cash/${id}`)
+export const getSihyeonGold = () => api.get('/sihyeon/gold')
+export const createSihyeonGold = (data) => api.post('/sihyeon/gold', data)
+export const updateSihyeonGold = (id, data) => api.put(`/sihyeon/gold/${id}`, data)
+export const deleteSihyeonGold = (id) => api.delete(`/sihyeon/gold/${id}`)
+
 // 고정비
 export const getFixedExpenses = () => api.get('/fixed-expenses')
 export const createFixedExpense = (data) => api.post('/fixed-expenses', data)
