@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { getSavings, getStocks, getCash, createCash, updateCash, deleteCash } from '../api/client'
+import { getSavings, getStocks, getCash, createCash, updateCash, deleteCash, getGoldPrice, getGold, createGold, updateGold, deleteGold } from '../api/client'
 import dayjs from 'dayjs'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
 const fmt = (n) => Number(n).toLocaleString('ko-KR') + '원'
 const EMPTY_FORM = { category: '', amount: '', note: '', date: dayjs().format('YYYY-MM-DD') }
+const EMPTY_GOLD_FORM = { grams: '', buy_price_per_gram: '', note: '', date: dayjs().format('YYYY-MM-DD') }
 
 function buildTrend(savingsGroups, cashList, stocksTotal) {
   const months = Array.from({ length: 12 }, (_, i) =>
@@ -40,6 +41,8 @@ export default function AssetsPage() {
   const [savingsTotal, setSavingsTotal] = useState(0)
   const [stocksTotal, setStocksTotal] = useState(0)
   const [cashList, setCashList] = useState([])
+  const [goldList, setGoldList] = useState([])
+  const [goldPrice, setGoldPrice] = useState(null)
   const [trend, setTrend] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -47,15 +50,23 @@ export default function AssetsPage() {
   const [editId, setEditId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [showGoldForm, setShowGoldForm] = useState(false)
+  const [goldForm, setGoldForm] = useState(EMPTY_GOLD_FORM)
+  const [goldEditId, setGoldEditId] = useState(null)
+  const [goldSubmitting, setGoldSubmitting] = useState(false)
 
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const [savRes, stRes, cashRes] = await Promise.all([getSavings(), getStocks(), getCash()])
+      const [savRes, stRes, cashRes, goldRes, goldPriceRes] = await Promise.all([
+        getSavings(), getStocks(), getCash(), getGold(), getGoldPrice().catch(() => ({ data: null }))
+      ])
       const stTotal = stRes.data.reduce((s, st) => s + (st.current_value || 0), 0)
       setSavingsTotal(savRes.data.reduce((s, g) => s + g.total, 0))
       setStocksTotal(stTotal)
       setCashList(cashRes.data)
+      setGoldList(goldRes.data)
+      setGoldPrice(goldPriceRes.data)
       setTrend(buildTrend(savRes.data, cashRes.data, stTotal))
     } finally {
       setLoading(false)
@@ -65,7 +76,32 @@ export default function AssetsPage() {
   useEffect(() => { fetchAll() }, [])
 
   const cashTotal = cashList.reduce((s, c) => s + Number(c.amount), 0)
-  const total = savingsTotal + stocksTotal + cashTotal
+  const goldTotal = goldPrice
+    ? goldList.reduce((s, g) => s + g.grams * goldPrice.sell_per_gram, 0)
+    : goldList.reduce((s, g) => s + g.grams * g.buy_price_per_gram, 0)
+  const total = savingsTotal + stocksTotal + cashTotal + goldTotal
+
+  const handleGoldSubmit = async (e) => {
+    e.preventDefault()
+    setGoldSubmitting(true)
+    try {
+      const data = { ...goldForm, grams: parseFloat(goldForm.grams), buy_price_per_gram: parseFloat(goldForm.buy_price_per_gram) }
+      if (goldEditId) await updateGold(goldEditId, data)
+      else await createGold(data)
+      setGoldForm(EMPTY_GOLD_FORM); setGoldEditId(null); setShowGoldForm(false)
+      await fetchAll()
+    } finally { setGoldSubmitting(false) }
+  }
+
+  const handleGoldEdit = (g) => {
+    setGoldForm({ grams: String(g.grams), buy_price_per_gram: String(g.buy_price_per_gram), note: g.note || '', date: g.date })
+    setGoldEditId(g.id); setShowGoldForm(true)
+  }
+
+  const handleGoldDelete = async (id) => {
+    if (!confirm('삭제하시겠습니까?')) return
+    await deleteGold(id); await fetchAll()
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -100,6 +136,7 @@ export default function AssetsPage() {
     { label: '적금', value: savingsTotal, color: '#4f86f7', icon: '🏦' },
     { label: '주식', value: stocksTotal,  color: '#22c55e', icon: '📈' },
     { label: '현금', value: cashTotal,    color: '#f59e0b', icon: '💵' },
+    { label: '금',   value: goldTotal,    color: '#eab308', icon: '🪙' },
   ]
 
   return (
@@ -173,6 +210,9 @@ export default function AssetsPage() {
                   + 추가
                 </button>
               )}
+              {label === '금' && !goldPrice && !loading && (
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>시세 로딩 중...</span>
+              )}
             </div>
           </div>
 
@@ -217,8 +257,121 @@ export default function AssetsPage() {
               현금 내역을 추가해주세요.
             </p>
           )}
+
+          {/* 금 시세 및 내역 */}
+          {label === '금' && (
+            <>
+              {goldPrice && (
+                <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 100, background: 'var(--bg)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>살때 (g)</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: '#ef4444' }}>{Number(goldPrice.buy_per_gram).toLocaleString('ko-KR')}원</div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 100, background: 'var(--bg)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>팔때 (g)</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: '#2563eb' }}>{Number(goldPrice.sell_per_gram).toLocaleString('ko-KR')}원</div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 100, background: 'var(--bg)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>국제금가</div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>${goldPrice.gold_usd_oz}</div>
+                  </div>
+                </div>
+              )}
+              {goldList.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
+                  {goldList.map((g) => {
+                    const currentVal = goldPrice ? g.grams * goldPrice.sell_per_gram : null
+                    const buyVal = g.grams * g.buy_price_per_gram
+                    const profit = currentVal != null ? currentVal - buyVal : null
+                    const profitPct = profit != null ? (profit / buyVal) * 100 : null
+                    return (
+                      <div key={g.id} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '8px 10px', background: 'var(--bg)', borderRadius: 8,
+                      }}>
+                        <div>
+                          <span style={{ fontWeight: 600, fontSize: 13 }}>{g.grams}g</span>
+                          {g.note && <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 6 }}>{g.note}</span>}
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
+                            매입 {Number(g.buy_price_per_gram).toLocaleString('ko-KR')}원/g · {g.date}
+                          </div>
+                          {profit != null && (
+                            <div style={{ fontSize: 11, marginTop: 1, color: profit >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
+                              {profit >= 0 ? '+' : ''}{fmt(Math.round(profit))} ({profitPct >= 0 ? '+' : ''}{profitPct.toFixed(2)}%)
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontWeight: 700, fontSize: 14, color: '#eab308' }}>
+                              {currentVal != null ? fmt(Math.round(currentVal)) : fmt(Math.round(buyVal))}
+                            </div>
+                          </div>
+                          <button className="btn secondary" style={{ padding: '2px 8px', fontSize: 11 }} onClick={() => handleGoldEdit(g)}>수정</button>
+                          <button className="btn-icon danger" onClick={() => handleGoldDelete(g.id)}>🗑️</button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              {goldList.length === 0 && !loading && !goldPrice && (
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', margin: '4px 0 8px' }}>
+                  금 보유량을 추가해주세요.
+                </p>
+              )}
+              <button className="btn primary" style={{ width: '100%', fontSize: 13 }}
+                onClick={() => { setGoldForm(EMPTY_GOLD_FORM); setGoldEditId(null); setShowGoldForm(true) }}>
+                + 추가
+              </button>
+            </>
+          )}
         </div>
       ))}
+
+      {/* 금 추가/수정 팝업 */}
+      {showGoldForm && (
+        <div className="modal-overlay" onClick={() => { setShowGoldForm(false); setGoldEditId(null); setGoldForm(EMPTY_GOLD_FORM) }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0 }}>{goldEditId ? '금 수정' : '금 추가'}</h2>
+              <button onClick={() => { setShowGoldForm(false); setGoldEditId(null); setGoldForm(EMPTY_GOLD_FORM) }}
+                style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+            </div>
+            <form onSubmit={handleGoldSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="form-row">
+                <label>보유량 (g)</label>
+                <input type="number" placeholder="예) 3.75" step="0.001" min="0"
+                  value={goldForm.grams}
+                  onChange={(e) => setGoldForm(p => ({ ...p, grams: e.target.value }))} required />
+              </div>
+              <div className="form-row">
+                <label>매입가 (원/g)</label>
+                <input type="number" placeholder="매입 당시 그램당 가격" min="0"
+                  value={goldForm.buy_price_per_gram}
+                  onChange={(e) => setGoldForm(p => ({ ...p, buy_price_per_gram: e.target.value }))} required />
+              </div>
+              <div className="form-row">
+                <label>날짜</label>
+                <input type="date" value={goldForm.date}
+                  onChange={(e) => setGoldForm(p => ({ ...p, date: e.target.value }))} />
+              </div>
+              <div className="form-row">
+                <label>메모</label>
+                <input placeholder="선택 입력" value={goldForm.note}
+                  onChange={(e) => setGoldForm(p => ({ ...p, note: e.target.value }))} />
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn secondary"
+                  onClick={() => { setShowGoldForm(false); setGoldEditId(null); setGoldForm(EMPTY_GOLD_FORM) }}>취소</button>
+                <button type="submit" className="btn primary" disabled={goldSubmitting}>
+                  {goldSubmitting ? '저장 중...' : goldEditId ? '수정' : '추가'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* 현금 추가/수정 팝업 */}
       {showForm && (

@@ -54,6 +54,13 @@ export const updateMemo = (id, data) => api.patch(`/memos/${id}`, data)
 export const deleteMemo = (id) => api.delete(`/memos/${id}`)
 
 
+// 금
+export const getGoldPrice = () => api.get('/gold/price')
+export const getGold = () => api.get('/gold')
+export const createGold = (data) => api.post('/gold', data)
+export const updateGold = (id, data) => api.put(`/gold/${id}`, data)
+export const deleteGold = (id) => api.delete(`/gold/${id}`)
+
 // 고정비
 export const getFixedExpenses = () => api.get('/fixed-expenses')
 export const createFixedExpense = (data) => api.post('/fixed-expenses', data)
