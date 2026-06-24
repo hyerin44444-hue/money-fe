@@ -62,8 +62,7 @@ export default function AssetsPage() {
         getSavings(), getStocks(), getCash(), getGold(), getGoldPrice().catch(() => ({ data: null }))
       ])
       const stTotal = stRes.data.reduce((s, st) => s + (st.current_value || 0), 0)
-      setSavingsTotal(savRes.data.reduce((s, g) =>
-        s + g.records.filter(r => !r.is_stock).reduce((a, r) => a + r.amount, 0), 0))
+      setSavingsTotal(savRes.data.reduce((s, g) => s + (g.non_stock_total ?? g.total), 0))
       setStocksTotal(stTotal)
       setCashList(cashRes.data)
       setGoldList(goldRes.data)
