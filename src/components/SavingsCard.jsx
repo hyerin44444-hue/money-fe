@@ -8,7 +8,7 @@ const THIS_YEAR = dayjs().year()
 export default function SavingsCard() {
   const [savings, setSavings] = useState([])
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ name: '', amount: '', date: dayjs().format('YYYY-MM-DD') })
+  const [form, setForm] = useState({ name: '', amount: '', date: dayjs().format('YYYY-MM-DD'), is_stock: false })
   const [submitting, setSubmitting] = useState(false)
   const [expandedMonths, setExpandedMonths] = useState(new Set())
 
@@ -24,8 +24,8 @@ export default function SavingsCard() {
     if (!form.name.trim() || !form.amount) return
     setSubmitting(true)
     try {
-      await addSavings({ name: form.name.trim(), amount: parseFloat(form.amount), date: form.date })
-      setForm({ name: '', amount: '', date: dayjs().format('YYYY-MM-DD') })
+      await addSavings({ name: form.name.trim(), amount: parseFloat(form.amount), date: form.date, is_stock: form.is_stock })
+      setForm({ name: '', amount: '', date: dayjs().format('YYYY-MM-DD'), is_stock: false })
       setShowForm(false)
       await fetchSavings()
     } finally { setSubmitting(false) }
@@ -89,6 +89,11 @@ export default function SavingsCard() {
             onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))} min="0" />
           <input type="date" value={form.date}
             onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.is_stock}
+              onChange={(e) => setForm((p) => ({ ...p, is_stock: e.target.checked }))} />
+            📈 주식 투자용 (자산 합산 제외)
+          </label>
           <button type="submit" className="btn primary" disabled={submitting}>
             {submitting ? '저장 중...' : '저장'}
           </button>
@@ -169,6 +174,7 @@ export default function SavingsCard() {
                         <div key={r.id} className="savings-record">
                           <span className="sr-date">{dayjs(r.date).format('YYYY.MM.DD')}</span>
                           <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1, marginLeft: 8 }}>{r.name}</span>
+                          {r.is_stock && <span style={{ fontSize: 11, color: '#22c55e' }}>📈</span>}
                           <span className="sr-amount">+{fmt(r.amount)}</span>
                           <button className="btn-icon danger" onClick={() => handleDelete(r.id, r.name)}>🗑️</button>
                         </div>
