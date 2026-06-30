@@ -51,15 +51,28 @@ function DayModal({ date, transactions, onClose }) {
   )
 }
 
-export default function MonthCalendar({ year, month, transactions }) {
+export default function MonthCalendar({ year, month, transactions, filterCategory: propFilter, setFilterCategory: propSetFilter }) {
   const [selectedDay, setSelectedDay] = useState(null)
-  const [filterCategory, setFilterCategory] = useState('전체')
+  const [internalFilter, setInternalFilter] = useState('전체')
+
+  useEffect(() => { setInternalFilter('전체') }, [year, month])
+
+  const isControlled = propFilter !== undefined
+  const filterCategory = isControlled ? propFilter : internalFilter
+  const setFilterCategory = isControlled ? propSetFilter : setInternalFilter
 
   const categories = ['전체', ...Array.from(new Set(transactions.map((t) => t.category))).sort()]
 
-  useEffect(() => { setFilterCategory('전체') }, [year, month])
-
   const filtered = filterCategory === '전체' ? transactions : transactions.filter((t) => t.category === filterCategory)
+
+  const totalIncome = filtered.reduce((s, t) => t.type === 'income' ? s + Number(t.amount) : s, 0)
+  const totalExpense = filtered.reduce((s, t) => t.type === 'expense' ? s + Number(t.amount) : s, 0)
+
+  const fmtTotal = (n) => {
+    if (n >= 100000000) return (n / 100000000).toFixed(1) + '억'
+    if (n >= 10000) return Math.round(n / 10000).toLocaleString() + '만'
+    return n.toLocaleString('ko-KR')
+  }
 
   const firstDay = dayjs(`${year}-${month}-01`)
   const daysInMonth = firstDay.daysInMonth()
@@ -98,20 +111,30 @@ export default function MonthCalendar({ year, month, transactions }) {
       <div className="calendar-card">
         <div className="calendar-header">
           <span className="calendar-title">{year}년 {month}월 달력</span>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {totalIncome > 0 && (
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8' }}>수입 +{fmtTotal(totalIncome)}원</span>
+            )}
+            {totalExpense > 0 && (
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--red)' }}>지출 -{fmtTotal(totalExpense)}원</span>
+            )}
+          </div>
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setFilterCategory(cat)}
-              className={`btn ${filterCategory === cat ? 'primary' : 'secondary'}`}
-              style={{ padding: '3px 10px', fontSize: 12 }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        {!isControlled && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setFilterCategory(cat)}
+                className={`btn ${filterCategory === cat ? 'primary' : 'secondary'}`}
+                style={{ padding: '3px 10px', fontSize: 12 }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="calendar-grid">
           {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useTransactions } from '../hooks/useTransactions'
@@ -19,6 +19,9 @@ export default function DashboardPage() {
   const [year, setYear] = useState(today.year())
   const [month, setMonth] = useState(today.month() + 1)
   const [period, setPeriod] = useState('daily')
+  const [filterCategory, setFilterCategory] = useState('전체')
+
+  useEffect(() => { setFilterCategory('전체') }, [year, month])
 
   const {
     transactions, summary,
@@ -144,8 +147,30 @@ export default function DashboardPage() {
       {/* 이번달 메모 */}
       <MonthMemo year={year} month={month} />
 
+      {/* 카테고리 필터 */}
+      {(() => {
+        const categories = ['전체', ...Array.from(new Set(transactions.map((t) => t.category))).sort()]
+        return categories.length > 1 ? (
+          <div className="card card-section" style={{ padding: '12px 16px' }}>
+            <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>카테고리 필터</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setFilterCategory(cat)}
+                  className={`btn ${filterCategory === cat ? 'primary' : 'secondary'}`}
+                  style={{ padding: '3px 10px', fontSize: 12 }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null
+      })()}
+
       {/* 월별 달력 */}
-      <MonthCalendar year={year} month={month} transactions={transactions} />
+      <MonthCalendar year={year} month={month} transactions={transactions} filterCategory={filterCategory} setFilterCategory={setFilterCategory} />
 
 
     </div>
