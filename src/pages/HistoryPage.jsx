@@ -110,34 +110,33 @@ export default function HistoryPage() {
       <MessageParser categories={categories} onSubmit={addTransaction} />
 
       {/* 카테고리 필터 + 버튼 */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            style={{
-              border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px',
-              fontSize: 13, color: 'var(--text-primary)', background: 'var(--white)', cursor: 'pointer',
-            }}
-          >
-            {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <button className="btn secondary" onClick={handleExportCSV}>📥 CSV</button>
+        <button className="btn secondary" onClick={openApplyModal}>📌 고정비 반영</button>
+        <button className="btn primary" onClick={() => { setEditTarget(null); setShowForm(true) }}>+ 추가</button>
+      </div>
+
+      <div className="card card-section" style={{ padding: '12px 16px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+          {categoryOptions.map((c) => (
+            <button
+              key={c}
+              onClick={() => setSelectedCategory(c)}
+              className={`btn ${selectedCategory === c ? 'primary' : 'secondary'}`}
+              style={{ padding: '3px 10px', fontSize: 12 }}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
           <span className="count">{filtered.length}건</span>
           {totalIncome > 0 && (
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#1e88e5' }}>
-              수입 +{fmt(totalIncome)}원
-            </span>
+            <span style={{ fontWeight: 600, color: '#1e88e5' }}>수입 +{fmt(totalIncome)}원</span>
           )}
           {totalExpense > 0 && (
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--red)' }}>
-              지출 -{fmt(totalExpense)}원
-            </span>
+            <span style={{ fontWeight: 600, color: 'var(--red)' }}>지출 -{fmt(totalExpense)}원</span>
           )}
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn secondary" onClick={handleExportCSV}>📥 CSV</button>
-          <button className="btn secondary" onClick={openApplyModal}>📌 고정비 반영</button>
-          <button className="btn primary" onClick={() => { setEditTarget(null); setShowForm(true) }}>+ 추가</button>
         </div>
       </div>
 
