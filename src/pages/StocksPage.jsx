@@ -262,7 +262,7 @@ export default function StocksPage() {
                             {[
                               { label: '보유수량',   value: `${st.quantity}주` },
                               { label: '평균매입가', value: st.currency === 'USD' ? `$${st.avg_price.toLocaleString()}` : `${fmt(Math.round(st.avg_price))}원` },
-                              { label: '투자금액(총)',value: `${fmt(Math.round(st.purchase_value || st.quantity * st.avg_price))}원` },
+                              { label: '투자금액',   value: `${fmt(Math.round(st.quantity * st.avg_price))}원` },
                               { label: '현재가',     value: st.current_price ? (st.currency === 'USD' ? `$${st.current_price.toFixed(2)}` : `${fmt(Math.round(st.current_price))}원`) : '조회 실패' },
                               { label: '평가금액',   value: st.current_value ? `${fmt(Math.round(st.current_value))}원` : '-' },
                             ].map(({ label, value }) => (
@@ -273,28 +273,16 @@ export default function StocksPage() {
                             ))}
                           </div>
 
-                          {/* 수익 요약 바 */}
-                          <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                            <div style={{
-                              flex: 1, display: 'flex', alignItems: 'center', gap: 8,
-                              background: st.profit == null ? 'var(--bg)' : st.profit >= 0 ? '#eff6ff' : '#fff1f2',
-                              borderRadius: 8, padding: '6px 10px',
-                              border: `1px solid ${st.profit == null ? 'var(--border)' : st.profit >= 0 ? '#bfdbfe' : '#fecdd3'}`,
-                            }}>
-                              <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>수익</span>
-                              <span style={{ fontWeight: 700, fontSize: 13, color: profitColor(st.profit) }}>
+                          <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                            <div style={{ display: 'flex', gap: 10 }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>평가손익</span>
+                              <span style={{ fontWeight: 700, color: profitColor(st.profit) }}>
                                 {st.profit == null ? '-' : `${st.profit >= 0 ? '+' : ''}${fmt(Math.round(st.profit))}원`}
                               </span>
-                              <span style={{
-                                fontSize: 12, fontWeight: 700, color: profitColor(st.profit),
-                                background: st.profit == null ? 'transparent' : st.profit >= 0 ? '#dbeafe' : '#fecdd3',
-                                borderRadius: 6, padding: '1px 6px',
-                              }}>
-                                {fmtRate(st.profit_rate)}
-                              </span>
+                              <span style={{ fontWeight: 700, color: profitColor(st.profit) }}>{fmtRate(st.profit_rate)}</span>
                             </div>
                             {st.day_change_rate != null && (
-                              <div style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 12, flexShrink: 0 }}>
+                              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                                 <span style={{ color: 'var(--text-muted)' }}>당일</span>
                                 <span style={{ fontWeight: 700, color: st.day_change_rate >= 0 ? 'var(--stock-up)' : 'var(--stock-down)' }}>
                                   {st.day_change_rate >= 0 ? '+' : ''}{st.day_change_rate.toFixed(2)}%
