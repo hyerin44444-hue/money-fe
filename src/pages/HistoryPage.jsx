@@ -67,7 +67,7 @@ export default function HistoryPage() {
   }
   const handleExportCSV = () => {
     if (filtered.length === 0) { alert('내보낼 내역이 없습니다.'); return }
-    const headers = ['날짜', '구분', '카테고리', '금액', '메모']
+    const headers = ['날짜', '구분', '카테고리', '금액', '메모', '비정기지출']
     const escape = (v) => {
       const s = String(v ?? '')
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
@@ -80,6 +80,7 @@ export default function HistoryPage() {
         t.category,
         t.amount,
         t.note || '',
+        t.is_irregular ? 'Y' : '',
       ].map(escape).join(','))
     const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
