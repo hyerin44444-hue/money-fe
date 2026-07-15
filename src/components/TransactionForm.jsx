@@ -8,6 +8,7 @@ const EMPTY = {
   category: '',
   amount: '',
   note: '',
+  is_irregular: false,
 }
 
 const TYPE_OPTIONS = [
@@ -84,6 +85,18 @@ export default function TransactionForm({ categories, onSubmit, onClose, initial
               placeholder="선택 입력"
             />
           </div>
+          {form.type === 'expense' && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                checked={!!form.is_irregular}
+                onChange={(e) => setForm((p) => ({ ...p, is_irregular: e.target.checked }))}
+                style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>비정기 지출</span>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>(고정비 외 일회성 지출)</span>
+            </label>
+          )}
           <div className="form-actions">
             <button type="button" className="btn secondary" onClick={onClose}>취소</button>
             <button type="submit" className="btn primary" disabled={submitting}>

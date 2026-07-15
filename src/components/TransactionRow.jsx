@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 
 export default function TransactionRow({ transaction, onEdit, onDelete, isFixed = false }) {
-  const { id, date, type, category, amount, note } = transaction
+  const { id, date, type, category, amount, note, is_irregular } = transaction
   const isIncome = type === 'income'
 
   return (
@@ -14,6 +14,11 @@ export default function TransactionRow({ transaction, onEdit, onDelete, isFixed 
         {isFixed && (
           <span style={{ marginLeft: 5, fontSize: 11, padding: '2px 6px', borderRadius: 99, background: '#f0f4ff', color: '#4f86f7', fontWeight: 600 }}>
             고정비
+          </span>
+        )}
+        {is_irregular && (
+          <span style={{ marginLeft: 5, fontSize: 11, padding: '2px 6px', borderRadius: 99, background: '#fff7ed', color: '#ea580c', fontWeight: 600 }}>
+            비정기
           </span>
         )}
       </td>
