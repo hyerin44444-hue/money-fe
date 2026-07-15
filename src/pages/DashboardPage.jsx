@@ -20,8 +20,9 @@ export default function DashboardPage() {
   const [month, setMonth] = useState(today.month() + 1)
   const [period, setPeriod] = useState('daily')
   const [filterCategory, setFilterCategory] = useState('전체')
+  const [irregularOnly, setIrregularOnly] = useState(false)
 
-  useEffect(() => { setFilterCategory('전체') }, [year, month])
+  useEffect(() => { setFilterCategory('전체'); setIrregularOnly(false) }, [year, month])
 
   const {
     transactions, summary,
@@ -164,13 +165,24 @@ export default function DashboardPage() {
                   {cat}
                 </button>
               ))}
+              <button
+                onClick={() => setIrregularOnly((v) => !v)}
+                style={{
+                  padding: '3px 10px', fontSize: 12, borderRadius: 99, border: 'none', cursor: 'pointer', fontWeight: 600,
+                  background: irregularOnly ? '#ea580c' : '#fff7ed',
+                  color: irregularOnly ? '#fff' : '#ea580c',
+                  outline: '1.5px solid #ea580c',
+                }}
+              >
+                비정기
+              </button>
             </div>
           </div>
         ) : null
       })()}
 
       {/* 월별 달력 */}
-      <MonthCalendar year={year} month={month} transactions={transactions} filterCategory={filterCategory} setFilterCategory={setFilterCategory} />
+      <MonthCalendar year={year} month={month} transactions={irregularOnly ? transactions.filter((t) => t.is_irregular) : transactions} filterCategory={filterCategory} setFilterCategory={setFilterCategory} />
 
 
     </div>
