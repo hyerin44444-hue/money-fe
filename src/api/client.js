@@ -78,6 +78,23 @@ export const createSihyeonGold = (data) => api.post('/sihyeon/gold', data)
 export const updateSihyeonGold = (id, data) => api.put(`/sihyeon/gold/${id}`, data)
 export const deleteSihyeonGold = (id) => api.delete(`/sihyeon/gold/${id}`)
 
+// 혜린 자산
+export const getHyerinSavings = () => api.get('/hyerin/savings')
+export const addHyerinSavings = (data) => api.post('/hyerin/savings', data)
+export const deleteHyerinSavings = (id) => api.delete(`/hyerin/savings/${id}`)
+export const getHyerinStocks = () => api.get('/hyerin/stocks')
+export const createHyerinStock = (data) => api.post('/hyerin/stocks', data)
+export const updateHyerinStock = (id, data) => api.put(`/hyerin/stocks/${id}`, data)
+export const deleteHyerinStock = (id) => api.delete(`/hyerin/stocks/${id}`)
+export const getHyerinCash = () => api.get('/hyerin/cash')
+export const createHyerinCash = (data) => api.post('/hyerin/cash', data)
+export const updateHyerinCash = (id, data) => api.put(`/hyerin/cash/${id}`, data)
+export const deleteHyerinCash = (id) => api.delete(`/hyerin/cash/${id}`)
+export const getHyerinGold = () => api.get('/hyerin/gold')
+export const createHyerinGold = (data) => api.post('/hyerin/gold', data)
+export const updateHyerinGold = (id, data) => api.put(`/hyerin/gold/${id}`, data)
+export const deleteHyerinGold = (id) => api.delete(`/hyerin/gold/${id}`)
+
 // 고정비
 export const getFixedExpenses = () => api.get('/fixed-expenses')
 export const createFixedExpense = (data) => api.post('/fixed-expenses', data)

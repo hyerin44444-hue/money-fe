@@ -11,6 +11,7 @@ import EventsPage from './pages/EventsPage'
 import StocksPage from './pages/StocksPage'
 import AssetsPage from './pages/AssetsPage'
 import SihyeonAssetsPage from './pages/SihyeonAssetsPage'
+import HyerinAssetsPage from './pages/HyerinAssetsPage'
 
 const NAV_ITEMS = [
   { to: '/', label: '대시보드', icon: '▦', end: true },
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { to: '/stocks', label: '주식', icon: '📈', end: false },
   { to: '/assets', label: '자산', icon: '💎', end: false },
   { to: '/sihyeon-assets', label: '시현 자산', icon: '👤', end: false },
+  { to: '/hyerin-assets', label: '혜린 자산', icon: '👤', end: false },
   { to: '/events', label: '경조사', icon: '💌', end: false },
   { to: '/settings', label: '설정', icon: '⚙', end: false },
 ]
@@ -72,6 +74,7 @@ export default function App() {
               <Route path="/stocks" element={<><span className="page-title">주식</span><span className="page-sub">보유 주식 현황과 수익률을 확인하세요.</span></>} />
               <Route path="/assets" element={<><span className="page-title">자산</span><span className="page-sub">적금·주식·현금을 합산한 총 자산을 확인하세요.</span></>} />
               <Route path="/sihyeon-assets" element={<><span className="page-title">시현 자산</span><span className="page-sub">시현 총 자산을 확인하세요.</span></>} />
+              <Route path="/hyerin-assets" element={<><span className="page-title">혜린 자산</span><span className="page-sub">혜린 총 자산을 확인하세요.</span></>} />
               <Route path="/events" element={<><span className="page-title">경조사</span><span className="page-sub">결혼식·장례식 등 주고 받은 기록을 관리하세요.</span></>} />
               <Route path="/settings" element={<><span className="page-title">설정</span><span className="page-sub">카테고리를 추가하고 관리하세요.</span></>} />
             </Routes>
@@ -88,6 +91,7 @@ export default function App() {
             <Route path="/stocks" element={<StocksPage />} />
             <Route path="/assets" element={<AssetsPage />} />
             <Route path="/sihyeon-assets" element={<SihyeonAssetsPage />} />
+            <Route path="/hyerin-assets" element={<HyerinAssetsPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
