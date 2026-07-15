@@ -12,6 +12,7 @@ import StocksPage from './pages/StocksPage'
 import AssetsPage from './pages/AssetsPage'
 import SihyeonAssetsPage from './pages/SihyeonAssetsPage'
 import HyerinAssetsPage from './pages/HyerinAssetsPage'
+import PasswordGate from './components/PasswordGate'
 
 const NAV_ITEMS = [
   { to: '/', label: '대시보드', icon: '▦', end: true },
@@ -91,7 +92,7 @@ export default function App() {
             <Route path="/stocks" element={<StocksPage />} />
             <Route path="/assets" element={<AssetsPage />} />
             <Route path="/sihyeon-assets" element={<SihyeonAssetsPage />} />
-            <Route path="/hyerin-assets" element={<HyerinAssetsPage />} />
+            <Route path="/hyerin-assets" element={<PasswordGate><HyerinAssetsPage /></PasswordGate>} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
