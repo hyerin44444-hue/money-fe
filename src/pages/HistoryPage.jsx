@@ -13,6 +13,7 @@ export default function HistoryPage() {
   const [editTarget, setEditTarget] = useState(null)
   const [fixedNames, setFixedNames] = useState(new Set())
   const [selectedCategory, setSelectedCategory] = useState('전체')
+  const [irregularOnly, setIrregularOnly] = useState(false)
   const [fixedList, setFixedList] = useState([])
   const [showApplyModal, setShowApplyModal] = useState(false)
   const [checkedIds, setCheckedIds] = useState(new Set())
@@ -32,9 +33,9 @@ export default function HistoryPage() {
   } = useTransactions(year, month)
 
   const categoryOptions = ['전체', ...Array.from(new Set(transactions.map((t) => t.category))).sort()]
-  const filtered = selectedCategory === '전체'
-    ? transactions
-    : transactions.filter((t) => t.category === selectedCategory)
+  const filtered = transactions
+    .filter((t) => selectedCategory === '전체' || t.category === selectedCategory)
+    .filter((t) => !irregularOnly || t.is_irregular)
 
   const totalIncome  = filtered.filter((t) => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const totalExpense = filtered.filter((t) => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
@@ -128,6 +129,17 @@ export default function HistoryPage() {
               {c}
             </button>
           ))}
+          <button
+            onClick={() => setIrregularOnly((v) => !v)}
+            style={{
+              padding: '3px 10px', fontSize: 12, borderRadius: 99, border: 'none', cursor: 'pointer', fontWeight: 600,
+              background: irregularOnly ? '#ea580c' : '#fff7ed',
+              color: irregularOnly ? '#fff' : '#ea580c',
+              outline: '1.5px solid #ea580c',
+            }}
+          >
+            비정기
+          </button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
           <span className="count">{filtered.length}건</span>
