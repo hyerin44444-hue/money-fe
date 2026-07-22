@@ -380,6 +380,10 @@ export default function StocksPage() {
           { label: '미국 S&P500',   color: '#0ea5e9', base: sp500Total,  items: sp500Stocks,  key: 'sp500'  },
         ].filter((g) => g.items.length > 0)
 
+        const allAccountStocks  = [...isaStocks, ...pensionStocks]
+        const otherStocks       = allAccountStocks.filter((st) => !isNasdaq(st) && !isSP500(st))
+        const otherTotal        = otherStocks.reduce((s, st) => s + (st.current_value || 0), 0)
+
         const calcProjected = (base, annualRate, years, monthlyPmt) => {
           const r = annualRate / 100
           const fv = base * Math.pow(1 + r, years)
@@ -475,6 +479,25 @@ export default function StocksPage() {
                   )
                 })}
               </>
+            )}
+
+            {/* 나스닥/S&P 외 기타 종목 합산 */}
+            {otherStocks.length > 0 && (
+              <div style={{ marginTop: 8, padding: '12px 14px', background: 'var(--bg)', borderRadius: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <div>
+                    <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>기타 종목</span>
+                    <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                      {otherStocks.map((st) => (
+                        <span key={st.id} style={{ marginRight: 8 }}>{st.name} {fmtBig(st.current_value || 0)}원</span>
+                      ))}
+                    </div>
+                  </div>
+                  <span style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                    {fmt(Math.round(otherTotal))}원
+                  </span>
+                </div>
+              </div>
             )}
           </div>
         )
