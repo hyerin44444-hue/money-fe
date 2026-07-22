@@ -351,6 +351,103 @@ export default function StocksPage() {
         })
       )}
 
+      {/* ISA / 연금 계좌 총합 */}
+      {(() => {
+        const isaStocks     = stocks.filter((st) => st.account_type?.toUpperCase().includes('ISA'))
+        const pensionStocks = stocks.filter((st) => st.account_type?.includes('연금'))
+        const isaTotal      = isaStocks.reduce((s, st) => s + (st.current_value || 0), 0)
+        const pensionTotal  = pensionStocks.reduce((s, st) => s + (st.current_value || 0), 0)
+        const combinedTotal = isaTotal + pensionTotal
+        if (isaStocks.length === 0 && pensionStocks.length === 0) return null
+
+        const YEARS = [5, 10, 15, 20, 25, 30]
+        const RATES = [8, 10, 12]
+        const fmtBig = (n) => {
+          if (n >= 1e8) return (n / 1e8).toFixed(1) + '억'
+          if (n >= 1e4) return Math.round(n / 1e4).toLocaleString() + '만'
+          return Math.round(n).toLocaleString()
+        }
+
+        return (
+          <>
+            {/* 계좌 총합 카드 */}
+            <div className="card card-section">
+              <h2 style={{ margin: '0 0 14px', fontSize: 15 }}>📊 계좌별 총합</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {isaStocks.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg)', borderRadius: 10 }}>
+                    <div>
+                      <span style={{ fontWeight: 700, fontSize: 14 }}>ISA 계좌</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>{isaStocks.length}종목</span>
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: 16, color: '#4f86f7' }}>{fmt(Math.round(isaTotal))}원</span>
+                  </div>
+                )}
+                {pensionStocks.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg)', borderRadius: 10 }}>
+                    <div>
+                      <span style={{ fontWeight: 700, fontSize: 14 }}>연금 계좌</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>{pensionStocks.length}종목</span>
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: 16, color: '#22c55e' }}>{fmt(Math.round(pensionTotal))}원</span>
+                  </div>
+                )}
+                {isaStocks.length > 0 && pensionStocks.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f0f4ff', borderRadius: 10, border: '1px solid #bfdbfe' }}>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: '#1d4ed8' }}>합계</span>
+                    <span style={{ fontWeight: 800, fontSize: 16, color: '#1d4ed8' }}>{fmt(Math.round(combinedTotal))}원</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 수익률 예상 테이블 */}
+            <div className="card card-section">
+              <h2 style={{ margin: '0 0 4px', fontSize: 15 }}>📈 장기 수익률 예상</h2>
+              <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-muted)' }}>
+                기준: ISA + 연금 합산 {fmt(Math.round(combinedTotal))}원 · 연 복리 기준
+              </p>
+
+              {[
+                { label: '미국 나스닥100 (QQQ)', color: '#6366f1' },
+                { label: '미국 S&P500 (SPY)',    color: '#0ea5e9' },
+              ].map(({ label, color }) => (
+                <div key={label} style={{ marginBottom: 20 }}>
+                  <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color }}>{label}</p>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg)' }}>
+                          <th style={{ padding: '7px 10px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>기간</th>
+                          {RATES.map((r) => (
+                            <th key={r} style={{ padding: '7px 10px', textAlign: 'right', color, fontWeight: 700, whiteSpace: 'nowrap' }}>{r}% / 년</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {YEARS.map((y, yi) => (
+                          <tr key={y} style={{ background: yi % 2 === 0 ? 'transparent' : 'var(--bg)' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{y}년 후</td>
+                            {RATES.map((r) => {
+                              const projected = combinedTotal * Math.pow(1 + r / 100, y)
+                              return (
+                                <td key={r} style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                                  {fmtBig(projected)}원
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )
+      })()}
+
       {/* 티커 도움말 */}
       <div className="card card-section">
         <h2 style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--text-secondary)' }}>티커 입력 방법</h2>
