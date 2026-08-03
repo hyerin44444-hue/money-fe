@@ -52,10 +52,20 @@ export default function MonthlyOverview({ year, currentMonth }) {
           <span style={{ color: 'var(--text-muted)' }}>·</span>
           <span>
             지출 <span style={{ fontWeight: 700, color: 'var(--red)' }}>{fmtWon(totalExpense)}</span>
+            {totalIncome > 0 && totalExpense > 0 && (
+              <span style={{ fontSize: 11, color: 'var(--red)', opacity: 0.8, marginLeft: 3 }}>
+                ({Math.round(totalExpense / totalIncome * 100)}%)
+              </span>
+            )}
           </span>
           <span style={{ color: 'var(--text-muted)' }}>·</span>
           <span>
             적금 <span style={{ fontWeight: 700, color: '#4f86f7' }}>{fmtWon(totalSavings)}</span>
+            {totalIncome > 0 && totalSavings > 0 && (
+              <span style={{ fontSize: 11, color: '#4f86f7', opacity: 0.8, marginLeft: 3 }}>
+                ({Math.round(totalSavings / totalIncome * 100)}%)
+              </span>
+            )}
           </span>
         </div>
       </div>
@@ -77,11 +87,25 @@ export default function MonthlyOverview({ year, currentMonth }) {
                 </div>
                 <div className="monthly-cell-row">
                   <span>지출</span>
-                  <span style={{ color: r.expense > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{fmt(r.expense)}</span>
+                  <span style={{ color: r.expense > 0 ? 'var(--red)' : 'var(--text-muted)' }}>
+                    {fmt(r.expense)}
+                    {r.income > 0 && r.expense > 0 && (
+                      <span style={{ fontSize: 10, color: 'var(--red)', opacity: 0.75, marginLeft: 3 }}>
+                        {Math.round(r.expense / r.income * 100)}%
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <div className="monthly-cell-row">
                   <span>적금</span>
-                  <span style={{ color: r.savings > 0 ? '#4f86f7' : 'var(--text-muted)' }}>{fmt(r.savings)}</span>
+                  <span style={{ color: r.savings > 0 ? '#4f86f7' : 'var(--text-muted)' }}>
+                    {fmt(r.savings)}
+                    {r.income > 0 && r.savings > 0 && (
+                      <span style={{ fontSize: 10, color: '#4f86f7', opacity: 0.75, marginLeft: 3 }}>
+                        {Math.round(r.savings / r.income * 100)}%
+                      </span>
+                    )}
+                  </span>
                 </div>
               </div>
             </div>
