@@ -19,6 +19,7 @@ export default function StocksPage() {
   const [addQty, setAddQty] = useState('')
   const [addPrice, setAddPrice] = useState('')
   const [monthlyAdd, setMonthlyAdd] = useState({ nasdaq: '', sp500: '', other: '' })
+  const [projTab, setProjTab] = useState('합계')
 
   const fetchStocks = async () => {
     setLoading(true)
@@ -371,8 +372,11 @@ export default function StocksPage() {
 
         const isNasdaq = (st) => /나스닥|nasdaq|qqq/i.test(st.name + st.ticker)
         const isSP500  = (st) => /s&p|sp500|에스앤피|spy/i.test(st.name + st.ticker)
-        const nasdaqStocks = stocks.filter(isNasdaq)
-        const sp500Stocks  = stocks.filter(isSP500)
+
+        const tabPool = projTab === 'ISA' ? isaStocks : projTab === '연금' ? pensionStocks : [...isaStocks, ...pensionStocks]
+
+        const nasdaqStocks = tabPool.filter(isNasdaq)
+        const sp500Stocks  = tabPool.filter(isSP500)
         const nasdaqTotal  = nasdaqStocks.reduce((s, st) => s + (st.current_value || 0), 0)
         const sp500Total   = sp500Stocks.reduce((s, st) => s + (st.current_value || 0), 0)
         const groups = [
@@ -380,9 +384,8 @@ export default function StocksPage() {
           { label: '미국 S&P500',   color: '#0ea5e9', base: sp500Total,  items: sp500Stocks,  key: 'sp500'  },
         ].filter((g) => g.items.length > 0)
 
-        const allAccountStocks  = [...isaStocks, ...pensionStocks]
-        const otherStocks       = allAccountStocks.filter((st) => !isNasdaq(st) && !isSP500(st))
-        const otherTotal        = otherStocks.reduce((s, st) => s + (st.current_value || 0), 0)
+        const otherStocks = tabPool.filter((st) => !isNasdaq(st) && !isSP500(st))
+        const otherTotal  = otherStocks.reduce((s, st) => s + (st.current_value || 0), 0)
 
         const calcProjected = (base, annualRate, years, monthlyPmt) => {
           const r = annualRate / 100
@@ -395,11 +398,25 @@ export default function StocksPage() {
 
         return (
           <div className="card card-section">
-            <h2 style={{ margin: '0 0 14px', fontSize: 15 }}>📈 계좌별 총합 &amp; 장기 수익률 예상</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <h2 style={{ margin: 0, fontSize: 15 }}>📈 계좌별 총합 &amp; 장기 수익률 예상</h2>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {['ISA', '연금', '합계'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setProjTab(tab)}
+                    className={`btn ${projTab === tab ? 'primary' : 'secondary'}`}
+                    style={{ padding: '4px 12px', fontSize: 12 }}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* 계좌 총합 */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-              {isaStocks.length > 0 && (
+              {(projTab === 'ISA' || projTab === '합계') && isaStocks.length > 0 && (
                 <div style={{ flex: 1, minWidth: 120, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg)', borderRadius: 10 }}>
                   <div>
                     <span style={{ fontWeight: 700, fontSize: 13 }}>ISA</span>
@@ -408,7 +425,7 @@ export default function StocksPage() {
                   <span style={{ fontWeight: 700, fontSize: 14, color: '#4f86f7' }}>{fmt(Math.round(isaTotal))}원</span>
                 </div>
               )}
-              {pensionStocks.length > 0 && (
+              {(projTab === '연금' || projTab === '합계') && pensionStocks.length > 0 && (
                 <div style={{ flex: 1, minWidth: 120, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg)', borderRadius: 10 }}>
                   <div>
                     <span style={{ fontWeight: 700, fontSize: 13 }}>연금</span>
@@ -417,7 +434,7 @@ export default function StocksPage() {
                   <span style={{ fontWeight: 700, fontSize: 14, color: '#22c55e' }}>{fmt(Math.round(pensionTotal))}원</span>
                 </div>
               )}
-              {isaStocks.length > 0 && pensionStocks.length > 0 && (
+              {projTab === '합계' && isaStocks.length > 0 && pensionStocks.length > 0 && (
                 <div style={{ flex: 1, minWidth: 120, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f0f4ff', borderRadius: 10, border: '1px solid #bfdbfe' }}>
                   <span style={{ fontWeight: 700, fontSize: 13, color: '#1d4ed8' }}>합계</span>
                   <span style={{ fontWeight: 800, fontSize: 14, color: '#1d4ed8' }}>{fmt(Math.round(combinedTotal))}원</span>
