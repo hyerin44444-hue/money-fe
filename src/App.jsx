@@ -9,6 +9,7 @@ import SavingsPage from './pages/SavingsPage'
 import FixedExpensePage from './pages/FixedExpensePage'
 import EventsPage from './pages/EventsPage'
 import StocksPage from './pages/StocksPage'
+import StatisticsPage from './pages/StatisticsPage'
 import AssetsPage from './pages/AssetsPage'
 import SihyeonAssetsPage from './pages/SihyeonAssetsPage'
 import HyerinAssetsPage from './pages/HyerinAssetsPage'
@@ -17,6 +18,7 @@ import PasswordGate from './components/PasswordGate'
 const NAV_ITEMS = [
   { to: '/', label: '대시보드', icon: '▦', end: true },
   { to: '/history', label: '내역', icon: '☰', end: false },
+  { to: '/statistics', label: '통계', icon: '📊', end: false },
   { to: '/savings', label: '적금', icon: '💰', end: false },
   { to: '/budget', label: '예산', icon: '◎', end: false },
   { to: '/fixed', label: '고정비', icon: '📌', end: false },
@@ -69,6 +71,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<><span className="page-title">대시보드</span><span className="page-sub">이번 달 수입·지출을 한눈에 확인하세요.</span></>} />
               <Route path="/history" element={<><span className="page-title">내역</span><span className="page-sub">전체 거래 내역을 조회하고 관리하세요.</span></>} />
+              <Route path="/statistics" element={<><span className="page-title">통계</span><span className="page-sub">수입·지출 현황과 카테고리별 월별 지출을 비교하세요.</span></>} />
               <Route path="/savings" element={<><span className="page-title">적금</span><span className="page-sub">적금 현황을 관리하세요.</span></>} />
               <Route path="/budget" element={<><span className="page-title">예산</span><span className="page-sub">카테고리별 월 예산을 설정하세요.</span></>} />
               <Route path="/fixed" element={<><span className="page-title">고정비</span><span className="page-sub">매달 나가는 고정 지출을 관리하세요.</span></>} />
@@ -86,6 +89,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/history" element={<HistoryPage />} />
+            <Route path="/statistics" element={<StatisticsPage />} />
             <Route path="/savings" element={<SavingsPage />} />
             <Route path="/budget" element={<BudgetPage />} />
             <Route path="/fixed" element={<FixedExpensePage />} />
