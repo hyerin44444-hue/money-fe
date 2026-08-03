@@ -362,7 +362,7 @@ export default function StocksPage() {
         const combinedTotal = isaTotal + pensionTotal
         if (isaStocks.length === 0 && pensionStocks.length === 0) return null
 
-        const YEARS = [5, 10, 15, 20, 25, 30]
+        const YEARS = [3, 5, 10, 15, 20, 25, 30]
         const RATES = [8, 10, 12]
         const fmtBig = (n) => {
           if (n >= 1e8) return (n / 1e8).toFixed(1) + '억'
