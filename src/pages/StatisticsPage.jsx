@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { useTransactions } from '../hooks/useTransactions'
 import { getTransactions } from '../api/client'
 import PeriodChart from '../components/PeriodChart'
@@ -19,6 +19,7 @@ export default function StatisticsPage() {
   const [period, setPeriod] = useState('daily')
   const [monthlyData, setMonthlyData] = useState([])
   const [loadingMonthly, setLoadingMonthly] = useState(false)
+  const [selectedCat, setSelectedCat] = useState(null)
 
   const { transactions } = useTransactions(year, month)
 
@@ -151,6 +152,52 @@ export default function StatisticsPage() {
           </div>
         </div>
       </div>
+
+      {/* 카테고리별 월별 지출 바차트 */}
+      {!loadingMonthly && categoryMonthly.length > 0 && (() => {
+        const activeCat = selectedCat && categoryMonthly.find((r) => r.cat === selectedCat)
+          ? selectedCat
+          : categoryMonthly[0].cat
+        const catIdx = categoryMonthly.findIndex((r) => r.cat === activeCat)
+        const barColor = PIE_COLORS[catIdx % PIE_COLORS.length]
+        const barData = monthlyData.map(({ label }, mi) => ({
+          label,
+          amount: categoryMonthly.find((r) => r.cat === activeCat)?.months[mi]?.amount || 0,
+        }))
+        return (
+          <div className="card card-section">
+            <h2 style={{ margin: '0 0 10px', fontSize: 16, color: 'var(--text-primary)' }}>카테고리별 월별 지출</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+              {categoryMonthly.map(({ cat }, i) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCat(cat)}
+                  className={`btn ${activeCat === cat ? 'primary' : 'secondary'}`}
+                  style={{ padding: '3px 10px', fontSize: 12 }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={barData} margin={{ top: 4, right: 12, left: 8, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} />
+                <YAxis
+                  tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
+                  tickFormatter={(v) => v >= 10000 ? `${Math.round(v / 10000)}만` : v.toLocaleString()}
+                  width={48}
+                />
+                <Tooltip
+                  formatter={(v) => [`${v.toLocaleString()}원`, activeCat]}
+                  contentStyle={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+                />
+                <Bar dataKey="amount" fill={barColor} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )
+      })()}
 
       {/* 카테고리별 월별 사용량 비교 */}
       <div className="card card-section">
