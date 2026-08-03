@@ -18,7 +18,7 @@ export default function StocksPage() {
   const [calcOpenId, setCalcOpenId] = useState(null)
   const [addQty, setAddQty] = useState('')
   const [addPrice, setAddPrice] = useState('')
-  const [monthlyAdd, setMonthlyAdd] = useState({ nasdaq: '', sp500: '' })
+  const [monthlyAdd, setMonthlyAdd] = useState({ nasdaq: '', sp500: '', other: '' })
 
   const fetchStocks = async () => {
     setLoading(true)
@@ -481,24 +481,56 @@ export default function StocksPage() {
               </>
             )}
 
-            {/* 나스닥/S&P 외 기타 종목 합산 */}
-            {otherStocks.length > 0 && (
-              <div style={{ marginTop: 8, padding: '12px 14px', background: 'var(--bg)', borderRadius: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <div>
-                    <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>기타 종목</span>
-                    <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                      {otherStocks.map((st) => (
-                        <span key={st.id} style={{ marginRight: 8 }}>{st.name} {fmtBig(st.current_value || 0)}원</span>
-                      ))}
+            {/* 나스닥/S&P 외 기타 종목 */}
+            {otherStocks.length > 0 && (() => {
+              const pmt = parseFloat(monthlyAdd.other) * 10000 || 0
+              return (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>기타 종목</p>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                      {otherStocks.map((st) => st.name).join(', ')} · 기준 {fmtBig(otherTotal)}원
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>월 추가납입</span>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={monthlyAdd.other}
+                        onChange={(e) => setMonthlyAdd((prev) => ({ ...prev, other: e.target.value }))}
+                        style={{ width: 80, padding: '3px 8px', fontSize: 12, border: '1px solid var(--border)', borderRadius: 6, textAlign: 'right', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                      />
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>만원</span>
                     </div>
                   </div>
-                  <span style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                    {fmt(Math.round(otherTotal))}원
-                  </span>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg)' }}>
+                          <th style={{ padding: '7px 10px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>기간</th>
+                          {RATES.map((r) => (
+                            <th key={r} style={{ padding: '7px 10px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 700, whiteSpace: 'nowrap' }}>{r}% / 년</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {YEARS.map((y, yi) => (
+                          <tr key={y} style={{ background: yi % 2 === 0 ? 'transparent' : 'var(--bg)' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{y}년 후</td>
+                            {RATES.map((r) => (
+                              <td key={r} style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                                {fmtBig(calcProjected(otherTotal, r, y, pmt))}원
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
           </div>
         )
       })()}
