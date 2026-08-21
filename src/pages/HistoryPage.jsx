@@ -212,6 +212,7 @@ export default function HistoryPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         fixedNames={fixedNames}
+        categories={categories}
       />
 
       {showApplyModal && (

@@ -1,6 +1,6 @@
 import TransactionRow from './TransactionRow'
 
-export default function TransactionList({ transactions, onEdit, onDelete, fixedNames = new Set() }) {
+export default function TransactionList({ transactions, onEdit, onDelete, fixedNames = new Set(), categories = [] }) {
   if (!transactions.length) {
     return (
       <div className="card">
@@ -25,7 +25,7 @@ export default function TransactionList({ transactions, onEdit, onDelete, fixedN
         </thead>
         <tbody>
           {transactions.map((t) => (
-            <TransactionRow key={t.id} transaction={t} onEdit={onEdit} onDelete={onDelete} isFixed={fixedNames.has(t.note)} />
+            <TransactionRow key={t.id} transaction={t} onEdit={onEdit} onDelete={onDelete} isFixed={fixedNames.has(t.note)} categories={categories} />
           ))}
         </tbody>
       </table>

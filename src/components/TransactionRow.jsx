@@ -1,8 +1,11 @@
 import dayjs from 'dayjs'
 
-export default function TransactionRow({ transaction, onEdit, onDelete, isFixed = false }) {
+export default function TransactionRow({ transaction, onEdit, onDelete, isFixed = false, categories = [] }) {
   const { id, date, type, category, amount, note, is_irregular } = transaction
   const isIncome = type === 'income'
+
+  const parentCat = categories.find((c) => c.name === category)?.parent
+  const categoryLabel = parentCat ? `${parentCat}[${category}]` : category
 
   return (
     <tr className="tx-row">
@@ -22,7 +25,7 @@ export default function TransactionRow({ transaction, onEdit, onDelete, isFixed 
           </span>
         )}
       </td>
-      <td>{category}</td>
+      <td>{categoryLabel}</td>
       <td className="note">{note || '-'}</td>
       <td className={`amount ${type}`}>
         {isIncome ? '+' : '-'}{Number(amount).toLocaleString('ko-KR')}원
