@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { useTransactions } from '../hooks/useTransactions'
-import { getTransactions } from '../api/client'
+import { getTransactions, getCategories } from '../api/client'
 import PeriodChart from '../components/PeriodChart'
+import { getMatchSet } from '../utils/categoryUtils'
 
 const PIE_COLORS = [
   '#4f86f7', '#f7764f', '#4fc3f7', '#f7c44f', '#a5d6a7',
@@ -20,6 +21,7 @@ export default function StatisticsPage() {
   const [monthlyData, setMonthlyData] = useState([])
   const [loadingMonthly, setLoadingMonthly] = useState(false)
   const [selectedCat, setSelectedCat] = useState(null)
+  const [allCategories, setAllCategories] = useState([])
 
   const { transactions } = useTransactions(year, month)
 
@@ -42,6 +44,7 @@ export default function StatisticsPage() {
       }
     }
     fetchMonthly()
+    getCategories().then((r) => setAllCategories(r.data))
   }, [year, month])
 
   const handlePrev = () => {
@@ -53,24 +56,59 @@ export default function StatisticsPage() {
     setYear(d.year()); setMonth(d.month() + 1)
   }
 
-  // 카테고리별 월별 비교 데이터
+  // 카테고리별 월별 비교 데이터 (계층형)
   const categoryMonthly = (() => {
     const catSet = new Set()
     monthlyData.forEach(({ transactions: txs }) => {
       txs.filter((t) => t.type === 'expense').forEach((t) => catSet.add(t.category))
     })
-    const categories = Array.from(catSet).sort()
-    return categories.map((cat) => ({
-      cat,
+
+    const calcRow = (catName, matchNames) => ({
+      cat: catName,
       months: monthlyData.map(({ label, transactions: txs }) => ({
         label,
-        amount: txs.filter((t) => t.type === 'expense' && t.category === cat)
+        amount: txs.filter((t) => t.type === 'expense' && matchNames.has(t.category))
                    .reduce((s, t) => s + Number(t.amount), 0),
       })),
       total: monthlyData.reduce((s, { transactions: txs }) =>
-        s + txs.filter((t) => t.type === 'expense' && t.category === cat)
+        s + txs.filter((t) => t.type === 'expense' && matchNames.has(t.category))
                .reduce((ss, t) => ss + Number(t.amount), 0), 0),
-    })).sort((a, b) => b.total - a.total)
+    })
+
+    const result = []
+    const sortByOrder = (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    const parents = allCategories.filter((c) => !c.parent).sort(sortByOrder)
+
+    parents.forEach((p) => {
+      const subs = allCategories.filter((c) => c.parent === p.name).sort(sortByOrder)
+      const subNames = subs.map((s) => s.name)
+      const allNames = new Set([p.name, ...subNames])
+      const hasData = [...allNames].some((n) => catSet.has(n))
+      if (!hasData) return
+
+      if (subs.length > 0) {
+        // 부모 합계 행 (자식 포함)
+        result.push({ ...calcRow(p.name, allNames), isParent: true })
+        // 자식 행
+        subs.forEach((s) => {
+          if (catSet.has(s.name)) result.push({ ...calcRow(s.name, new Set([s.name])), isChild: true, parentName: p.name })
+        })
+        // 부모 자체 거래도 있으면 별도 행
+        if (catSet.has(p.name) && subs.length > 0)
+          result.push({ ...calcRow(`${p.name} (직접)`, new Set([p.name])), isChild: true, parentName: p.name })
+      } else {
+        result.push(calcRow(p.name, new Set([p.name])))
+      }
+    })
+
+    // 정의에 없는 카테고리
+    catSet.forEach((cat) => {
+      if (!allCategories.find((c) => c.name === cat)) {
+        result.push(calcRow(cat, new Set([cat])))
+      }
+    })
+
+    return result
   })()
 
   // 파이차트 데이터
@@ -95,9 +133,9 @@ export default function StatisticsPage() {
     )
   }
 
-  // 각 월의 최대값 (히트맵 색상용)
+  // 각 월의 최대값 (히트맵 색상용 — 부모 합산 행 제외하고 개별 행 기준)
   const colMax = monthlyData.map((_, mi) =>
-    Math.max(...categoryMonthly.map((row) => row.months[mi]?.amount || 0), 1)
+    Math.max(...categoryMonthly.filter((r) => !r.isParent).map((row) => row.months[mi]?.amount || 0), 1)
   )
 
   return (
@@ -168,14 +206,14 @@ export default function StatisticsPage() {
           <div className="card card-section">
             <h2 style={{ margin: '0 0 10px', fontSize: 16, color: 'var(--text-primary)' }}>카테고리별 월별 지출</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-              {categoryMonthly.map(({ cat }, i) => (
+              {categoryMonthly.map(({ cat, isChild }, i) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCat(cat)}
                   className={`btn ${activeCat === cat ? 'primary' : 'secondary'}`}
-                  style={{ padding: '3px 10px', fontSize: 12 }}
+                  style={{ padding: '3px 10px', fontSize: isChild ? 11 : 12, marginLeft: isChild ? 4 : 0 }}
                 >
-                  {cat}
+                  {isChild ? `└ ${cat}` : cat}
                 </button>
               ))}
             </div>
@@ -220,21 +258,33 @@ export default function StatisticsPage() {
                 </tr>
               </thead>
               <tbody>
-                {categoryMonthly.map(({ cat, months, total }, ri) => (
-                  <tr key={cat} style={{ background: ri % 2 === 0 ? 'transparent' : 'var(--bg)' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{cat}</td>
+                {categoryMonthly.map(({ cat, months, total, isParent, isChild }, ri) => (
+                  <tr key={cat} style={{
+                    background: isParent ? 'var(--bg)' : isChild ? 'transparent' : ri % 2 === 0 ? 'transparent' : 'var(--bg)',
+                    borderTop: isParent ? '1px solid var(--border)' : undefined,
+                  }}>
+                    <td style={{
+                      padding: '8px 12px',
+                      paddingLeft: isChild ? 24 : 12,
+                      fontWeight: isParent ? 700 : 500,
+                      color: isParent ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      whiteSpace: 'nowrap',
+                      fontSize: isChild ? 11 : 12,
+                    }}>
+                      {isChild ? `└ ${cat}` : cat}
+                    </td>
                     {months.map(({ label, amount }, mi) => {
                       const intensity = colMax[mi] > 0 ? amount / colMax[mi] : 0
-                      const bg = amount > 0
+                      const bg = amount > 0 && !isChild
                         ? `rgba(79, 134, 247, ${0.08 + intensity * 0.3})`
                         : 'transparent'
                       return (
-                        <td key={label} style={{ padding: '8px 10px', textAlign: 'right', background: bg, color: amount > 0 ? 'var(--text-primary)' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                        <td key={label} style={{ padding: '8px 10px', textAlign: 'right', background: bg, color: amount > 0 ? 'var(--text-primary)' : 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: isChild ? 11 : 12 }}>
                           {amount > 0 ? fmt(Math.round(amount)) : '-'}
                         </td>
                       )
                     })}
-                    <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: 'var(--red)', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: isParent ? 700 : 500, color: 'var(--red)', whiteSpace: 'nowrap', fontSize: isChild ? 11 : 12 }}>
                       {fmt(Math.round(total))}
                     </td>
                   </tr>
@@ -251,7 +301,7 @@ export default function StatisticsPage() {
                     )
                   })}
                   <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 800, color: 'var(--red)', whiteSpace: 'nowrap' }}>
-                    {fmt(Math.round(categoryMonthly.reduce((s, r) => s + r.total, 0)))}
+                    {fmt(Math.round(categoryMonthly.filter((r) => !r.isParent).reduce((s, r) => s + r.total, 0)))}
                   </td>
                 </tr>
               </tbody>

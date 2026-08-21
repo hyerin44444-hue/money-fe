@@ -22,11 +22,24 @@ export default function TransactionForm({ categories, onSubmit, onClose, initial
 
   useEffect(() => { setForm(initial || EMPTY) }, [initial])
 
-  const filteredCategories = categories
-    .filter((c) => c.type === form.type || c.type === 'both')
-    .slice()
-    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-    .map((c) => ({ value: c.name, label: c.name }))
+  const filteredCategories = (() => {
+    const pool = categories
+      .filter((c) => c.type === form.type || c.type === 'both')
+      .slice()
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    const parents = pool.filter((c) => !c.parent)
+    const result = []
+    parents.forEach((p) => {
+      result.push({ value: p.name, label: p.name })
+      pool.filter((c) => c.parent === p.name).forEach((s) => {
+        result.push({ value: s.name, label: `└ ${s.name}` })
+      })
+    })
+    // parent 없는 고아 하위카테고리도 추가
+    pool.filter((c) => c.parent && !parents.find((p) => p.name === c.parent))
+        .forEach((c) => result.push({ value: c.name, label: c.name }))
+    return result
+  })()
 
   const handleSubmit = async (e) => {
     e.preventDefault()

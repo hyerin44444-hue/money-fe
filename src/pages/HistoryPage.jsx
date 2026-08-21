@@ -5,6 +5,7 @@ import { applyFixedExpenses, getFixedExpenses } from '../api/client'
 import TransactionList from '../components/TransactionList'
 import TransactionForm from '../components/TransactionForm'
 import MessageParser from '../components/MessageParser'
+import { buildCatOptions, getMatchSet } from '../utils/categoryUtils'
 export default function HistoryPage() {
   const today = dayjs()
   const [year, setYear] = useState(today.year())
@@ -32,9 +33,11 @@ export default function HistoryPage() {
     addTransaction, editTransaction, removeTransaction, refresh,
   } = useTransactions(year, month)
 
-  const categoryOptions = ['전체', ...Array.from(new Set(transactions.map((t) => t.category))).sort()]
+  const txCatSet = new Set(transactions.map((t) => t.category))
+  const catOptions = buildCatOptions(categories, txCatSet)
+  const matchSet = getMatchSet(selectedCategory, categories)
   const filtered = transactions
-    .filter((t) => selectedCategory === '전체' || t.category === selectedCategory)
+    .filter((t) => !matchSet || matchSet.has(t.category))
     .filter((t) => !irregularOnly || t.is_irregular)
 
   const totalIncome  = filtered.filter((t) => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
@@ -120,14 +123,19 @@ export default function HistoryPage() {
 
       <div className="card card-section" style={{ padding: '12px 16px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-          {categoryOptions.map((c) => (
+          <button
+            onClick={() => setSelectedCategory('전체')}
+            className={`btn ${selectedCategory === '전체' ? 'primary' : 'secondary'}`}
+            style={{ padding: '3px 10px', fontSize: 12 }}
+          >전체</button>
+          {catOptions.map(({ value, label, isChild }) => (
             <button
-              key={c}
-              onClick={() => setSelectedCategory(c)}
-              className={`btn ${selectedCategory === c ? 'primary' : 'secondary'}`}
-              style={{ padding: '3px 10px', fontSize: 12 }}
+              key={value}
+              onClick={() => setSelectedCategory(value)}
+              className={`btn ${selectedCategory === value ? 'primary' : 'secondary'}`}
+              style={{ padding: '3px 10px', fontSize: 12, marginLeft: isChild ? 4 : 0 }}
             >
-              {c}
+              {label}
             </button>
           ))}
           <button
