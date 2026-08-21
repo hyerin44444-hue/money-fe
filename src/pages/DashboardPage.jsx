@@ -14,9 +14,9 @@ export default function DashboardPage() {
   const [month, setMonth] = useState(today.month() + 1)
   const [selectedParent, setSelectedParent] = useState('전체')
   const [selectedSub, setSelectedSub] = useState(null)
-  const [irregularOnly, setIrregularOnly] = useState(false)
+  const [irregularFilter, setIrregularFilter] = useState('all') // 'all' | 'irregular' | 'regular'
 
-  useEffect(() => { setSelectedParent('전체'); setSelectedSub(null); setIrregularOnly(false) }, [year, month])
+  useEffect(() => { setSelectedParent('전체'); setSelectedSub(null); setIrregularFilter('all') }, [year, month])
 
   const {
     transactions, summary, categories,
@@ -79,7 +79,8 @@ export default function DashboardPage() {
           return getMatchSet(selectedParent, categories)
         })()
 
-        const calendarTx = (irregularOnly ? transactions.filter((t) => t.is_irregular) : transactions)
+        const calendarTx = transactions
+          .filter((t) => irregularFilter === 'all' ? true : irregularFilter === 'irregular' ? t.is_irregular : !t.is_irregular)
           .filter((t) => !activeFilter || activeFilter.has(t.category))
 
         const filterLabel = selectedSub || selectedParent
@@ -101,9 +102,15 @@ export default function DashboardPage() {
                     {p.name}{categories.some((c) => c.parent === p.name) ? ' ▾' : ''}
                   </button>
                 ))}
-                <button onClick={() => setIrregularOnly((v) => !v)}
-                  style={{ padding: '3px 10px', fontSize: 12, borderRadius: 99, border: 'none', cursor: 'pointer', fontWeight: 600, background: irregularOnly ? '#ea580c' : '#fff7ed', color: irregularOnly ? '#fff' : '#ea580c', outline: '1.5px solid #ea580c' }}>
-                  비정기</button>
+                {[['all', '전체'], ['irregular', '비정기만'], ['regular', '정기만']].map(([val, label]) => (
+                  <button key={val} onClick={() => setIrregularFilter(val)}
+                    style={{ padding: '3px 10px', fontSize: 12, borderRadius: 99, border: 'none', cursor: 'pointer', fontWeight: 600,
+                      background: irregularFilter === val ? '#ea580c' : '#fff7ed',
+                      color: irregularFilter === val ? '#fff' : '#ea580c',
+                      outline: '1.5px solid #ea580c' }}>
+                    {label}
+                  </button>
+                ))}
               </div>
               {/* 2단계: 하위 */}
               {subOptions.length > 0 && (

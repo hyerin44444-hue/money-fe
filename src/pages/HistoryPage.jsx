@@ -15,7 +15,7 @@ export default function HistoryPage() {
   const [fixedNames, setFixedNames] = useState(new Set())
   const [selectedParent, setSelectedParent] = useState('전체')
   const [selectedSub, setSelectedSub] = useState(null)
-  const [irregularOnly, setIrregularOnly] = useState(false)
+  const [irregularFilter, setIrregularFilter] = useState('all')
   const [fixedList, setFixedList] = useState([])
   const [showApplyModal, setShowApplyModal] = useState(false)
   const [checkedIds, setCheckedIds] = useState(new Set())
@@ -63,7 +63,7 @@ export default function HistoryPage() {
 
   const filtered = transactions
     .filter((t) => !activeFilter || activeFilter.has(t.category))
-    .filter((t) => !irregularOnly || t.is_irregular)
+    .filter((t) => irregularFilter === 'all' ? true : irregularFilter === 'irregular' ? t.is_irregular : !t.is_irregular)
 
   const totalIncome  = filtered.filter((t) => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const totalExpense = filtered.filter((t) => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
@@ -164,15 +164,15 @@ export default function HistoryPage() {
               {p.name}{categories.some((c) => c.parent === p.name) ? ' ▾' : ''}
             </button>
           ))}
-          <button
-            onClick={() => setIrregularOnly((v) => !v)}
-            style={{
-              padding: '3px 10px', fontSize: 12, borderRadius: 99, border: 'none', cursor: 'pointer', fontWeight: 600,
-              background: irregularOnly ? '#ea580c' : '#fff7ed',
-              color: irregularOnly ? '#fff' : '#ea580c',
-              outline: '1.5px solid #ea580c',
-            }}
-          >비정기</button>
+          {[['all', '전체'], ['irregular', '비정기만'], ['regular', '정기만']].map(([val, label]) => (
+            <button key={val} onClick={() => setIrregularFilter(val)}
+              style={{ padding: '3px 10px', fontSize: 12, borderRadius: 99, border: 'none', cursor: 'pointer', fontWeight: 600,
+                background: irregularFilter === val ? '#ea580c' : '#fff7ed',
+                color: irregularFilter === val ? '#fff' : '#ea580c',
+                outline: '1.5px solid #ea580c' }}>
+              {label}
+            </button>
+          ))}
         </div>
         {/* 2단계: 하위 카테고리 */}
         {subOptions.length > 0 && (
