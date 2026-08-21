@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getCategories, createCategory, deleteCategory, reorderCategories } from '../api/client'
+import { getCategories, createCategory, updateCategory, deleteCategory, reorderCategories } from '../api/client'
 import Select from '../components/Select'
 
 export default function SettingsPage() {
@@ -7,8 +7,10 @@ export default function SettingsPage() {
   const [catForm, setCatForm] = useState({ name: '', type: 'expense', parent: '' })
   const [catError, setCatError] = useState('')
   const [submittingCat, setSubmittingCat] = useState(false)
-  const [addingSubFor, setAddingSubFor] = useState(null) // 하위카테고리 추가 중인 부모 이름
+  const [addingSubFor, setAddingSubFor] = useState(null)
   const [subName, setSubName] = useState('')
+  const [editingCat, setEditingCat] = useState(null) // { name, type, editName }
+  const [submittingEdit, setSubmittingEdit] = useState(false)
 
   const fetchAll = async () => {
     const catRes = await getCategories()
@@ -73,6 +75,19 @@ export default function SettingsPage() {
 
   const sortByOrder = (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
 
+  const handleEditCat = async () => {
+    if (!editingCat || !editingCat.editName.trim() || submittingEdit) return
+    if (editingCat.editName.trim() === editingCat.name) { setEditingCat(null); return }
+    setSubmittingEdit(true)
+    try {
+      await updateCategory(editingCat.name, { new_name: editingCat.editName.trim(), type: editingCat.type })
+      setEditingCat(null)
+      await fetchAll()
+    } catch (e) {
+      alert(e.response?.data?.detail || '수정 실패')
+    } finally { setSubmittingEdit(false) }
+  }
+
   const handleAddSub = async (parentName, type) => {
     if (!subName.trim() || addingSubFor === null) return
     const name = subName.trim()
@@ -109,15 +124,28 @@ export default function SettingsPage() {
                     <button className="btn-order" disabled={i === 0} onClick={() => handleMove(type, i, -1, null)}>▲</button>
                     <button className="btn-order" disabled={i === parents.length - 1} onClick={() => handleMove(type, i, 1, null)}>▼</button>
                   </div>
-                  <span className="category-name">{c.name}</span>
-                  <span className={`category-type-badge ${badgeClass}`}>{label}</span>
-                  <button
-                    className="btn-icon"
-                    title="하위 카테고리 추가"
-                    onClick={() => { setAddingSubFor(c.name); setSubName('') }}
-                    style={{ fontSize: 13, color: 'var(--accent)' }}
-                  >＋</button>
-                  <button className="btn-icon danger" onClick={() => handleDeleteCat(c.name, type)}>🗑️</button>
+                  {editingCat?.name === c.name && editingCat?.type === type ? (
+                    <>
+                      <input
+                        autoFocus
+                        type="text"
+                        value={editingCat.editName}
+                        onChange={(e) => setEditingCat((p) => ({ ...p, editName: e.target.value }))}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleEditCat(); if (e.key === 'Escape') setEditingCat(null) }}
+                        style={{ flex: 1, padding: '3px 8px', fontSize: 13, border: '1px solid var(--accent)', borderRadius: 6 }}
+                      />
+                      <button className="btn primary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={handleEditCat} disabled={submittingEdit}>저장</button>
+                      <button className="btn secondary" style={{ padding: '3px 10px', fontSize: 12 }} onClick={() => setEditingCat(null)}>취소</button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="category-name">{c.name}</span>
+                      <span className={`category-type-badge ${badgeClass}`}>{label}</span>
+                      <button className="btn-icon" title="이름 수정" onClick={() => setEditingCat({ name: c.name, type, editName: c.name })}>✏️</button>
+                      <button className="btn-icon" title="하위 카테고리 추가" onClick={() => { setAddingSubFor(c.name); setSubName('') }} style={{ fontSize: 13, color: 'var(--accent)' }}>＋</button>
+                      <button className="btn-icon danger" onClick={() => handleDeleteCat(c.name, type)}>🗑️</button>
+                    </>
+                  )}
                 </div>
                 {/* 인라인 하위 카테고리 추가 입력 */}
                 {addingSubFor === c.name && (
@@ -144,9 +172,27 @@ export default function SettingsPage() {
                       <button className="btn-order" disabled={si === subs.length - 1} onClick={() => handleMove(type, si, 1, c.name)}>▼</button>
                     </div>
                     <span style={{ fontSize: 11, color: 'var(--text-muted)', marginRight: 4 }}>└</span>
-                    <span className="category-name" style={{ fontSize: 13 }}>{s.name}</span>
-                    <span className={`category-type-badge ${badgeClass}`} style={{ fontSize: 10 }}>하위</span>
-                    <button className="btn-icon danger" onClick={() => handleDeleteCat(s.name, type)}>🗑️</button>
+                    {editingCat?.name === s.name && editingCat?.type === type ? (
+                      <>
+                        <input
+                          autoFocus
+                          type="text"
+                          value={editingCat.editName}
+                          onChange={(e) => setEditingCat((p) => ({ ...p, editName: e.target.value }))}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleEditCat(); if (e.key === 'Escape') setEditingCat(null) }}
+                          style={{ flex: 1, padding: '3px 8px', fontSize: 12, border: '1px solid var(--accent)', borderRadius: 6 }}
+                        />
+                        <button className="btn primary" style={{ padding: '3px 10px', fontSize: 11 }} onClick={handleEditCat} disabled={submittingEdit}>저장</button>
+                        <button className="btn secondary" style={{ padding: '3px 10px', fontSize: 11 }} onClick={() => setEditingCat(null)}>취소</button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="category-name" style={{ fontSize: 13 }}>{s.name}</span>
+                        <span className={`category-type-badge ${badgeClass}`} style={{ fontSize: 10 }}>하위</span>
+                        <button className="btn-icon" title="이름 수정" onClick={() => setEditingCat({ name: s.name, type, editName: s.name })}>✏️</button>
+                        <button className="btn-icon danger" onClick={() => handleDeleteCat(s.name, type)}>🗑️</button>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>

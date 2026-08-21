@@ -16,7 +16,8 @@ export const getYearlySummary = () => api.get('/summary/yearly')
 // 카테고리
 export const getCategories = () => api.get('/categories')
 export const createCategory = (data) => api.post('/categories', data)
-export const deleteCategory = (name) => api.delete(`/categories/${encodeURIComponent(name)}`)
+export const updateCategory = (name, data) => api.put(`/categories/${encodeURIComponent(name)}`, data)
+export const deleteCategory = (name, type) => api.delete(`/categories/${encodeURIComponent(name)}`, { params: { type } })
 export const reorderCategories = (categories) => api.put('/categories/reorder', { categories })
 
 // 적금
