@@ -19,7 +19,7 @@ export default function SettingsPage() {
 
   const handleAddCat = async (e) => {
     e.preventDefault()
-    if (!catForm.name.trim()) return
+    if (submittingCat || !catForm.name.trim()) return
     setCatError('')
     setSubmittingCat(true)
     try {
@@ -74,11 +74,12 @@ export default function SettingsPage() {
   const sortByOrder = (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
 
   const handleAddSub = async (parentName, type) => {
-    if (!subName.trim()) return
+    if (!subName.trim() || addingSubFor === null) return
+    const name = subName.trim()
+    setSubName('')
+    setAddingSubFor(null)
     try {
-      await createCategory({ name: subName.trim(), type, parent: parentName })
-      setSubName('')
-      setAddingSubFor(null)
+      await createCategory({ name, type, parent: parentName })
       await fetchAll()
     } catch (e) {
       alert(e.response?.data?.detail || '추가 실패')
