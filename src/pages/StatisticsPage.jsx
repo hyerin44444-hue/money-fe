@@ -193,27 +193,62 @@ export default function StatisticsPage() {
 
       {/* 카테고리별 월별 지출 바차트 */}
       {!loadingMonthly && categoryMonthly.length > 0 && (() => {
-        const activeCat = selectedCat && categoryMonthly.find((r) => r.cat === selectedCat)
+        // 부모 카테고리만 pill로 노출 (자식은 스택 차트로 보여줌)
+        const parentRows = categoryMonthly.filter((r) => !r.isChild)
+        const activeCat = selectedCat && parentRows.find((r) => r.cat === selectedCat)
           ? selectedCat
-          : categoryMonthly[0].cat
+          : parentRows[0]?.cat
+
+        // 선택한 카테고리의 하위 목록
+        const subs = allCategories
+          .filter((c) => c.parent === activeCat)
+          .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        const isParentCat = subs.length > 0
+
+        let barData, stackKeys
+        if (isParentCat) {
+          const hasDirectParent = monthlyData.some(({ transactions: txs }) =>
+            txs.some((t) => t.type === 'expense' && t.category === activeCat))
+          stackKeys = subs.map((s) => s.name)
+          if (hasDirectParent) stackKeys = [...stackKeys, `${activeCat}(기타)`]
+
+          barData = monthlyData.map(({ label, transactions: txs }) => {
+            const entry = { label }
+            subs.forEach((s) => {
+              entry[s.name] = txs.filter((t) => t.type === 'expense' && t.category === s.name)
+                .reduce((sum, t) => sum + Number(t.amount), 0)
+            })
+            if (hasDirectParent) {
+              entry[`${activeCat}(기타)`] = txs
+                .filter((t) => t.type === 'expense' && t.category === activeCat)
+                .reduce((sum, t) => sum + Number(t.amount), 0)
+            }
+            return entry
+          })
+        } else {
+          stackKeys = null
+          const catIdx = categoryMonthly.findIndex((r) => r.cat === activeCat)
+          barData = monthlyData.map(({ label }, mi) => ({
+            label,
+            amount: categoryMonthly.find((r) => r.cat === activeCat)?.months[mi]?.amount || 0,
+          }))
+        }
+
         const catIdx = categoryMonthly.findIndex((r) => r.cat === activeCat)
         const barColor = PIE_COLORS[catIdx % PIE_COLORS.length]
-        const barData = monthlyData.map(({ label }, mi) => ({
-          label,
-          amount: categoryMonthly.find((r) => r.cat === activeCat)?.months[mi]?.amount || 0,
-        }))
+
         return (
           <div className="card card-section">
             <h2 style={{ margin: '0 0 10px', fontSize: 16, color: 'var(--text-primary)' }}>카테고리별 월별 지출</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-              {categoryMonthly.map(({ cat, isChild }, i) => (
+              {parentRows.map(({ cat }, i) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCat(cat)}
                   className={`btn ${activeCat === cat ? 'primary' : 'secondary'}`}
-                  style={{ padding: '3px 10px', fontSize: isChild ? 11 : 12, marginLeft: isChild ? 4 : 0 }}
+                  style={{ padding: '4px 12px', fontSize: 12 }}
                 >
-                  {isChild ? `└ ${cat}` : cat}
+                  {cat}{allCategories.some((c) => c.parent === cat) ? ' ▾' : ''}
                 </button>
               ))}
             </div>
@@ -227,10 +262,18 @@ export default function StatisticsPage() {
                   width={48}
                 />
                 <Tooltip
-                  formatter={(v) => [`${v.toLocaleString()}원`, activeCat]}
+                  formatter={(v, name) => [`${Number(v).toLocaleString()}원`, name]}
                   contentStyle={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
                 />
-                <Bar dataKey="amount" fill={barColor} radius={[4, 4, 0, 0]} />
+                {isParentCat ? (
+                  stackKeys.map((key, i) => (
+                    <Bar key={key} dataKey={key} stackId="a" fill={PIE_COLORS[i % PIE_COLORS.length]}
+                      radius={i === stackKeys.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />
+                  ))
+                ) : (
+                  <Bar dataKey="amount" fill={barColor} radius={[4, 4, 0, 0]} />
+                )}
+                {isParentCat && <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: 'var(--text-secondary)', paddingTop: 8 }} />}
               </BarChart>
             </ResponsiveContainer>
           </div>

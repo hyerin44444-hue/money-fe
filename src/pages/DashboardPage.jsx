@@ -87,44 +87,57 @@ export default function DashboardPage() {
 
         return (
           <>
-            <div className="card card-section" style={{ padding: '12px 16px' }}>
-              <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>카테고리 필터</p>
-              {/* 1단계: 부모 */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: subOptions.length > 0 ? 8 : 0 }}>
-                <button onClick={() => { setSelectedParent('전체'); setSelectedSub(null) }}
-                  className={`btn ${selectedParent === '전체' ? 'primary' : 'secondary'}`}
-                  style={{ padding: '3px 10px', fontSize: 12 }}>전체</button>
-                {parentOptions.map((p) => (
-                  <button key={p.name}
-                    onClick={() => { setSelectedParent(p.name); setSelectedSub(null) }}
-                    className={`btn ${selectedParent === p.name ? 'primary' : 'secondary'}`}
-                    style={{ padding: '3px 10px', fontSize: 12 }}>
-                    {p.name}{categories.some((c) => c.parent === p.name) ? ' ▾' : ''}
-                  </button>
-                ))}
-                {[['all', '전체'], ['irregular', '비정기만'], ['regular', '정기만']].map(([val, label]) => (
-                  <button key={val} onClick={() => setIrregularFilter(val)}
-                    style={{ padding: '3px 10px', fontSize: 12, borderRadius: 99, border: 'none', cursor: 'pointer', fontWeight: 600,
-                      background: irregularFilter === val ? '#ea580c' : '#fff7ed',
-                      color: irregularFilter === val ? '#fff' : '#ea580c',
-                      outline: '1.5px solid #ea580c' }}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {/* 2단계: 하위 */}
-              {subOptions.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingLeft: 12, borderLeft: '2px solid var(--accent)' }}>
-                  <button onClick={() => setSelectedSub(null)}
-                    className={`btn ${!selectedSub ? 'primary' : 'secondary'}`}
-                    style={{ padding: '3px 10px', fontSize: 11 }}>전체</button>
-                  {subOptions.map((s) => (
-                    <button key={s.name} onClick={() => setSelectedSub(s.name)}
-                      className={`btn ${selectedSub === s.name ? 'primary' : 'secondary'}`}
-                      style={{ padding: '3px 10px', fontSize: 11 }}>{s.name}</button>
+            <div className="card card-section" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* 카테고리 */}
+              <div>
+                <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>카테고리</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  <button onClick={() => { setSelectedParent('전체'); setSelectedSub(null) }}
+                    className={`btn ${selectedParent === '전체' ? 'primary' : 'secondary'}`}
+                    style={{ padding: '4px 12px', fontSize: 12 }}>전체</button>
+                  {parentOptions.map((p) => (
+                    <button key={p.name}
+                      onClick={() => { setSelectedParent(p.name); setSelectedSub(null) }}
+                      className={`btn ${selectedParent === p.name ? 'primary' : 'secondary'}`}
+                      style={{ padding: '4px 12px', fontSize: 12 }}>
+                      {p.name}{categories.some((c) => c.parent === p.name) ? ' ▾' : ''}
+                    </button>
                   ))}
                 </div>
+              </div>
+
+              {/* 하위 카테고리 */}
+              {subOptions.length > 0 && (
+                <div style={{ background: 'var(--bg)', borderRadius: 8, padding: '10px 12px' }}>
+                  <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.04em' }}>└ {selectedParent} 세부</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    <button onClick={() => setSelectedSub(null)}
+                      className={`btn ${!selectedSub ? 'primary' : 'secondary'}`}
+                      style={{ padding: '4px 12px', fontSize: 12 }}>전체</button>
+                    {subOptions.map((s) => (
+                      <button key={s.name} onClick={() => setSelectedSub(s.name)}
+                        className={`btn ${selectedSub === s.name ? 'primary' : 'secondary'}`}
+                        style={{ padding: '4px 12px', fontSize: 12 }}>{s.name}</button>
+                    ))}
+                  </div>
+                </div>
               )}
+
+              {/* 비정기 필터 */}
+              <div>
+                <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>비정기 여부</p>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {[['all', '전체'], ['irregular', '비정기만'], ['regular', '정기만']].map(([val, label]) => (
+                    <button key={val} onClick={() => setIrregularFilter(val)}
+                      style={{ padding: '4px 12px', fontSize: 12, borderRadius: 99, border: 'none', cursor: 'pointer', fontWeight: 600,
+                        background: irregularFilter === val ? '#ea580c' : '#fff7ed',
+                        color: irregularFilter === val ? '#fff' : '#ea580c',
+                        outline: '1.5px solid #ea580c' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
             <MonthCalendar year={year} month={month} transactions={calendarTx} filterCategory={filterLabel} setFilterCategory={() => {}} />
           </>
