@@ -20,6 +20,19 @@ export default function FixedExpensePage() {
     setFixedList(fixRes.data)
   }
 
+  const categoryOptions = (() => {
+    const sortByOrder = (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    const parents = categories.filter((c) => !c.parent).sort(sortByOrder)
+    const result = []
+    parents.forEach((p) => {
+      result.push({ value: p.name, label: p.name })
+      categories.filter((c) => c.parent === p.name).sort(sortByOrder).forEach((s) => {
+        result.push({ value: s.name, label: `└ ${s.name}` })
+      })
+    })
+    return result
+  })()
+
   useEffect(() => { fetchAll() }, [])
 
   const handleAddFixed = async (e) => {
@@ -95,7 +108,7 @@ export default function FixedExpensePage() {
             <Select
               value={fixedForm.category}
               onChange={(v) => setFixedForm((p) => ({ ...p, category: v }))}
-              options={categories.map((c) => ({ value: c.name, label: c.name }))}
+              options={categoryOptions}
               placeholder="카테고리"
             />
           </div>
@@ -139,7 +152,7 @@ export default function FixedExpensePage() {
                     <Select
                       value={editingFixed.category}
                       onChange={(v) => setEditingFixed((p) => ({ ...p, category: v }))}
-                      options={categories.map((c) => ({ value: c.name, label: c.name }))}
+                      options={categoryOptions}
                       placeholder="카테고리"
                     />
                   </div>
