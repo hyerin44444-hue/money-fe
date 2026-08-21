@@ -5,7 +5,7 @@ import { applyFixedExpenses, getFixedExpenses } from '../api/client'
 import TransactionList from '../components/TransactionList'
 import TransactionForm from '../components/TransactionForm'
 import MessageParser from '../components/MessageParser'
-import { buildCatOptions, getMatchSet } from '../utils/categoryUtils'
+import { getMatchSet } from '../utils/categoryUtils'
 export default function HistoryPage() {
   const today = dayjs()
   const [year, setYear] = useState(today.year())
@@ -13,7 +13,8 @@ export default function HistoryPage() {
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
   const [fixedNames, setFixedNames] = useState(new Set())
-  const [selectedCategory, setSelectedCategory] = useState('전체')
+  const [selectedParent, setSelectedParent] = useState('전체')
+  const [selectedSub, setSelectedSub] = useState(null)
   const [irregularOnly, setIrregularOnly] = useState(false)
   const [fixedList, setFixedList] = useState([])
   const [showApplyModal, setShowApplyModal] = useState(false)
@@ -34,10 +35,34 @@ export default function HistoryPage() {
   } = useTransactions(year, month)
 
   const txCatSet = new Set(transactions.map((t) => t.category))
-  const catOptions = buildCatOptions(categories, txCatSet)
-  const matchSet = getMatchSet(selectedCategory, categories)
+
+  // 1단계: 부모 카테고리 목록 (하위가 있는 것도 포함)
+  const parentOptions = (() => {
+    const sortByOrder = (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    const parents = categories.filter((c) => !c.parent).sort(sortByOrder)
+    return parents.filter((p) => {
+      const subs = categories.filter((c) => c.parent === p.name)
+      const allNames = new Set([p.name, ...subs.map((s) => s.name)])
+      return [...allNames].some((n) => txCatSet.has(n))
+    })
+  })()
+
+  // 2단계: 선택된 부모의 하위 카테고리 목록
+  const subOptions = selectedParent !== '전체'
+    ? categories
+        .filter((c) => c.parent === selectedParent && txCatSet.has(c.name))
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    : []
+
+  // 필터 집합
+  const activeFilter = (() => {
+    if (selectedParent === '전체') return null
+    if (selectedSub) return new Set([selectedSub])
+    return getMatchSet(selectedParent, categories)
+  })()
+
   const filtered = transactions
-    .filter((t) => !matchSet || matchSet.has(t.category))
+    .filter((t) => !activeFilter || activeFilter.has(t.category))
     .filter((t) => !irregularOnly || t.is_irregular)
 
   const totalIncome  = filtered.filter((t) => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
@@ -122,20 +147,21 @@ export default function HistoryPage() {
       </div>
 
       <div className="card card-section" style={{ padding: '12px 16px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+        {/* 1단계: 부모 카테고리 */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: subOptions.length > 0 ? 8 : 10 }}>
           <button
-            onClick={() => setSelectedCategory('전체')}
-            className={`btn ${selectedCategory === '전체' ? 'primary' : 'secondary'}`}
+            onClick={() => { setSelectedParent('전체'); setSelectedSub(null) }}
+            className={`btn ${selectedParent === '전체' ? 'primary' : 'secondary'}`}
             style={{ padding: '3px 10px', fontSize: 12 }}
           >전체</button>
-          {catOptions.map(({ value, label, isChild }) => (
+          {parentOptions.map((p) => (
             <button
-              key={value}
-              onClick={() => setSelectedCategory(value)}
-              className={`btn ${selectedCategory === value ? 'primary' : 'secondary'}`}
-              style={{ padding: '3px 10px', fontSize: 12, marginLeft: isChild ? 4 : 0 }}
+              key={p.name}
+              onClick={() => { setSelectedParent(p.name); setSelectedSub(null) }}
+              className={`btn ${selectedParent === p.name ? 'primary' : 'secondary'}`}
+              style={{ padding: '3px 10px', fontSize: 12 }}
             >
-              {label}
+              {p.name}{categories.some((c) => c.parent === p.name) ? ' ▾' : ''}
             </button>
           ))}
           <button
@@ -146,10 +172,26 @@ export default function HistoryPage() {
               color: irregularOnly ? '#fff' : '#ea580c',
               outline: '1.5px solid #ea580c',
             }}
-          >
-            비정기
-          </button>
+          >비정기</button>
         </div>
+        {/* 2단계: 하위 카테고리 */}
+        {subOptions.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10, paddingLeft: 12, borderLeft: '2px solid var(--accent)' }}>
+            <button
+              onClick={() => setSelectedSub(null)}
+              className={`btn ${!selectedSub ? 'primary' : 'secondary'}`}
+              style={{ padding: '3px 10px', fontSize: 11 }}
+            >전체</button>
+            {subOptions.map((s) => (
+              <button
+                key={s.name}
+                onClick={() => setSelectedSub(s.name)}
+                className={`btn ${selectedSub === s.name ? 'primary' : 'secondary'}`}
+                style={{ padding: '3px 10px', fontSize: 11 }}
+              >{s.name}</button>
+            ))}
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
           <span className="count">{filtered.length}건</span>
           {totalIncome > 0 && (
