@@ -5,7 +5,8 @@ export default function TransactionRow({ transaction, onEdit, onDelete, isFixed 
   const isIncome = type === 'income'
 
   const parentCat = categories.find((c) => c.name === category)?.parent
-  const categoryLabel = parentCat ? `${parentCat}[${category}]` : category
+  const hasSubs = categories.some((c) => c.parent === category)
+  const categoryLabel = parentCat ? `${parentCat}[${category}]` : hasSubs ? `${category}[]` : category
 
   return (
     <tr className="tx-row">
