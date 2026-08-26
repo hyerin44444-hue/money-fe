@@ -9,8 +9,9 @@ const profitColor = (p) => p == null ? 'var(--text-muted)' : p >= 0 ? 'var(--sto
 
 export default function StocksPage() {
   const [stocks, setStocks] = useState([])
-  const [priceMap, setPriceMap] = useState({}) // id → price data
+  const [priceMap, setPriceMap] = useState({})
   const [pricesLoading, setPricesLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [form, setForm] = useState(EMPTY_FORM)
   const [editId, setEditId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -23,8 +24,13 @@ export default function StocksPage() {
   const [projTab, setProjTab] = useState('합계')
 
   const fetchStocks = async () => {
-    const res = await getStocks()
-    setStocks(res.data)
+    setLoading(true)
+    try {
+      const res = await getStocks()
+      setStocks(res.data)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const fetchPrices = async () => {
