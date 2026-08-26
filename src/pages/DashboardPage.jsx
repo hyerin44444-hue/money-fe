@@ -70,7 +70,7 @@ export default function DashboardPage() {
         if (parentOptions.length === 0) return null
 
         const subOptions = selectedParent !== '전체'
-          ? categories.filter((c) => c.parent === selectedParent && txCatSet.has(c.name)).sort(sortByOrder)
+          ? categories.filter((c) => c.parent === selectedParent).sort(sortByOrder)
           : []
 
         const activeFilter = (() => {

@@ -49,7 +49,7 @@ export default function HistoryPage() {
   // 2단계: 선택된 부모의 하위 카테고리 목록
   const subOptions = selectedParent !== '전체'
     ? categories
-        .filter((c) => c.parent === selectedParent && txCatSet.has(c.name))
+        .filter((c) => c.parent === selectedParent)
         .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     : []
 
