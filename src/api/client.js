@@ -103,6 +103,4 @@ export const updateFixedExpense = (id, data) => api.put(`/fixed-expenses/${id}`,
 export const deleteFixedExpense = (id) => api.delete(`/fixed-expenses/${id}`)
 export const applyFixedExpenses = (year, month, ids = []) => api.post('/fixed-expenses/apply', { ids }, { params: { year, month } })
 
-// 토스증권
-export const getTossAccounts = () => api.get('/toss/accounts')
-export const getTossHoldings = (accountSeq) => api.get('/toss/holdings', { params: { account_seq: accountSeq } })
+export const getStockPrices = () => api.get('/stocks/prices')

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getStocks, createStock, updateStock, deleteStock, getTossAccounts, getTossHoldings } from '../api/client'
+import { getStocks, createStock, updateStock, deleteStock, getStockPrices } from '../api/client'
 
 const EMPTY_FORM = { name: '', ticker: '', quantity: '', avg_price: '', owner: '', account_type: '' }
 
@@ -9,7 +9,8 @@ const profitColor = (p) => p == null ? 'var(--text-muted)' : p >= 0 ? 'var(--sto
 
 export default function StocksPage() {
   const [stocks, setStocks] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [priceMap, setPriceMap] = useState({}) // id → price data
+  const [pricesLoading, setPricesLoading] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [editId, setEditId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -20,32 +21,38 @@ export default function StocksPage() {
   const [addPrice, setAddPrice] = useState('')
   const [monthlyAdd, setMonthlyAdd] = useState({ nasdaq: '', sp500: '', other: '' })
   const [projTab, setProjTab] = useState('합계')
-  const [showToss, setShowToss] = useState(false)
-  const [tossAccounts, setTossAccounts] = useState([])
-  const [tossSelectedAcc, setTossSelectedAcc] = useState(null)
-  const [tossHoldings, setTossHoldings] = useState(null)
-  const [tossLoading, setTossLoading] = useState(false)
-  const [tossError, setTossError] = useState('')
 
   const fetchStocks = async () => {
-    setLoading(true)
+    const res = await getStocks()
+    setStocks(res.data)
+  }
+
+  const fetchPrices = async () => {
+    setPricesLoading(true)
     try {
-      const res = await getStocks()
-      setStocks(res.data)
+      const res = await getStockPrices()
+      const map = {}
+      res.data.forEach((p) => { map[p.id] = p })
+      setPriceMap(map)
     } finally {
-      setLoading(false)
+      setPricesLoading(false)
     }
   }
 
-  useEffect(() => { fetchStocks() }, [])
+  useEffect(() => {
+    fetchStocks().then(fetchPrices)
+  }, [])
 
-  const totalPurchase = stocks.reduce((s, st) => s + (st.purchase_value || 0), 0)
-  const totalCurrent  = stocks.reduce((s, st) => s + (st.current_value || 0), 0)
+  // 기본 데이터 + 가격 데이터 병합
+  const enriched = stocks.map((st) => ({ ...st, ...(priceMap[st.id] || {}) }))
+
+  const totalPurchase = enriched.reduce((s, st) => s + (st.purchase_value || 0), 0)
+  const totalCurrent  = enriched.reduce((s, st) => s + (st.current_value || 0), 0)
   const totalProfit   = totalCurrent - totalPurchase
   const totalRate     = totalPurchase > 0 ? (totalProfit / totalPurchase * 100) : 0
 
   // 소유자 → 계좌종류 → 종목 그룹핑
-  const grouped = stocks.reduce((acc, st) => {
+  const grouped = enriched.reduce((acc, st) => {
     const owner   = st.owner || '미분류'
     const account = st.account_type || '일반'
     if (!acc[owner]) acc[owner] = {}
@@ -71,6 +78,7 @@ export default function StocksPage() {
       else await createStock(data)
       setForm(EMPTY_FORM); setEditId(null); setShowForm(false)
       await fetchStocks()
+      fetchPrices()
     } catch (e) {
       setError(e.response?.data?.detail || '저장 실패')
     } finally { setSubmitting(false) }
@@ -87,51 +95,13 @@ export default function StocksPage() {
 
   const handleDelete = async (id, name) => {
     if (!confirm(`"${name}" 종목을 삭제하시겠습니까?`)) return
-    await deleteStock(id); await fetchStocks()
+    await deleteStock(id)
+    await fetchStocks()
+    fetchPrices()
   }
 
   const handleCancel = () => {
     setForm(EMPTY_FORM); setEditId(null); setShowForm(false); setError('')
-  }
-
-  const openTossModal = async () => {
-    setShowToss(true); setTossError(''); setTossHoldings(null); setTossSelectedAcc(null)
-    setTossLoading(true)
-    try {
-      const res = await getTossAccounts()
-      const accs = Array.isArray(res.data) ? res.data : (res.data?.accounts || [])
-      setTossAccounts(accs)
-      if (accs.length === 1) fetchTossHoldings(accs[0])
-    } catch (e) {
-      setTossError(e.response?.data?.detail || '계좌 목록 조회 실패. TOSS_CLIENT_ID/SECRET을 확인해주세요.')
-    } finally { setTossLoading(false) }
-  }
-
-  const fetchTossHoldings = async (acc) => {
-    const seq = acc?.accountSeq || acc?.seq || acc?.id || acc
-    setTossSelectedAcc(acc); setTossLoading(true); setTossError('')
-    try {
-      const res = await getTossHoldings(seq)
-      setTossHoldings(res.data)
-    } catch (e) {
-      setTossError(e.response?.data?.detail || '보유 주식 조회 실패')
-    } finally { setTossLoading(false) }
-  }
-
-  const importTossHolding = async (item) => {
-    // 토스 API 응답 필드명 방어적으로 매핑
-    const ticker = item.ticker || item.symbol || item.isin || item.shortCode || ''
-    const name = item.productName || item.name || item.stockName || ticker
-    const quantity = parseFloat(item.holdingQuantity ?? item.quantity ?? 0)
-    const avg_price = parseFloat(item.averagePrice ?? item.avgPrice ?? item.purchasePrice ?? 0)
-    if (!ticker || !quantity) { alert('티커 또는 수량 정보가 없습니다.'); return }
-    try {
-      await createStock({ name, ticker, quantity, avg_price, owner: '', account_type: tossSelectedAcc?.accountType || '' })
-      await fetchStocks()
-      alert(`${name} 추가 완료`)
-    } catch (e) {
-      alert(e.response?.data?.detail || '추가 실패')
-    }
   }
 
   const openCalc = (st) => {
@@ -159,10 +129,9 @@ export default function StocksPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h2 style={{ margin: 0, fontSize: 16 }}>주식 포트폴리오</h2>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn secondary" onClick={fetchStocks} disabled={loading} style={{ fontSize: 13 }}>
-              {loading ? '조회 중...' : '🔄 새로고침'}
+            <button className="btn secondary" onClick={() => { fetchStocks().then(fetchPrices) }} disabled={pricesLoading} style={{ fontSize: 13 }}>
+              {pricesLoading ? '시세 조회 중...' : '🔄 새로고침'}
             </button>
-            <button className="btn secondary" onClick={openTossModal} style={{ fontSize: 13 }}>🔗 토스 가져오기</button>
             <button className="btn primary" onClick={() => { setShowForm(true); setEditId(null); setForm(EMPTY_FORM) }}>+ 종목 추가</button>
           </div>
         </div>
@@ -312,8 +281,8 @@ export default function StocksPage() {
                               { label: '보유수량',   value: `${st.quantity}주` },
                               { label: '평균매입가', value: st.currency === 'USD' ? `$${st.avg_price.toLocaleString()}` : `${fmt(Math.round(st.avg_price))}원` },
                               { label: '투자금액',   value: `${fmt(Math.round(st.quantity * st.avg_price))}원` },
-                              { label: '현재가',     value: st.current_price ? (st.currency === 'USD' ? `$${st.current_price.toFixed(2)}` : `${fmt(Math.round(st.current_price))}원`) : '조회 실패' },
-                              { label: '평가금액',   value: st.current_value ? `${fmt(Math.round(st.current_value))}원` : '-' },
+                              { label: '현재가',     value: pricesLoading && !st.current_price ? '조회 중...' : st.current_price ? (st.currency === 'USD' ? `$${st.current_price.toFixed(2)}` : `${fmt(Math.round(st.current_price))}원`) : '조회 실패' },
+                              { label: '평가금액',   value: pricesLoading && !st.current_value ? '조회 중...' : st.current_value ? `${fmt(Math.round(st.current_value))}원` : '-' },
                             ].map(({ label, value }) => (
                               <div key={label} style={{ background: 'var(--bg)', borderRadius: 6, padding: '5px 6px' }}>
                                 <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 2 }}>{label}</div>
@@ -402,8 +371,8 @@ export default function StocksPage() {
 
       {/* ISA / 연금 계좌 총합 + 장기 수익률 예상 */}
       {(() => {
-        const isaStocks     = stocks.filter((st) => st.account_type?.toUpperCase().includes('ISA'))
-        const pensionStocks = stocks.filter((st) => st.account_type?.includes('연금'))
+        const isaStocks     = enriched.filter((st) => st.account_type?.toUpperCase().includes('ISA'))
+        const pensionStocks = enriched.filter((st) => st.account_type?.includes('연금'))
         const isaTotal      = isaStocks.reduce((s, st) => s + (st.current_value || 0), 0)
         const pensionTotal  = pensionStocks.reduce((s, st) => s + (st.current_value || 0), 0)
         const combinedTotal = isaTotal + pensionTotal
@@ -599,96 +568,6 @@ export default function StocksPage() {
         )
       })()}
 
-      {/* 토스증권 가져오기 모달 */}
-      {showToss && (
-        <div className="modal-overlay" onClick={() => setShowToss(false)}>
-          <div className="modal" style={{ maxWidth: 560, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h2 style={{ margin: 0, fontSize: 16 }}>🔗 토스증권 보유 주식 가져오기</h2>
-              <button onClick={() => setShowToss(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
-            </div>
-
-            {tossError && (
-              <div style={{ padding: '10px 14px', background: '#fef2f2', borderRadius: 8, color: '#dc2626', fontSize: 13, marginBottom: 12 }}>
-                {tossError}
-              </div>
-            )}
-
-            {tossLoading && <div className="loading-msg">불러오는 중...</div>}
-
-            {/* 계좌 선택 */}
-            {!tossLoading && tossAccounts.length > 1 && !tossHoldings && (
-              <div>
-                <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--text-secondary)' }}>계좌를 선택하세요</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {tossAccounts.map((acc, i) => (
-                    <button key={i} className="btn secondary" style={{ textAlign: 'left', padding: '10px 14px' }}
-                      onClick={() => fetchTossHoldings(acc)}>
-                      <div style={{ fontWeight: 600 }}>{acc.accountType || acc.accountName || `계좌 ${i + 1}`}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{acc.accountNumber || acc.accountSeq || acc.seq}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 보유 주식 목록 */}
-            {!tossLoading && tossHoldings && (
-              <div style={{ overflowY: 'auto', flex: 1 }}>
-                {/* 계좌 변경 버튼 */}
-                {tossAccounts.length > 1 && (
-                  <button className="btn secondary" style={{ fontSize: 12, marginBottom: 12 }}
-                    onClick={() => { setTossHoldings(null); setTossSelectedAcc(null) }}>← 계좌 다시 선택</button>
-                )}
-
-                {/* 원시 응답 표시 (필드명 모를 때 대비) */}
-                {(() => {
-                  const items = Array.isArray(tossHoldings)
-                    ? tossHoldings
-                    : (tossHoldings?.holdings || tossHoldings?.items || tossHoldings?.stocks || [])
-
-                  if (items.length === 0) return (
-                    <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>보유 주식이 없습니다.</p>
-                  )
-
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {items.map((item, i) => {
-                        const ticker = item.ticker || item.symbol || item.isin || item.shortCode || '-'
-                        const name = item.productName || item.name || item.stockName || ticker
-                        const qty = item.holdingQuantity ?? item.quantity ?? '-'
-                        const avgP = item.averagePrice ?? item.avgPrice ?? item.purchasePrice ?? '-'
-                        const evalAmt = item.evaluationAmount ?? item.currentValue ?? null
-                        return (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)' }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 600, fontSize: 14 }}>{name}</div>
-                              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                                {ticker} · {qty}주 · 평균 {typeof avgP === 'number' ? avgP.toLocaleString() : avgP}
-                                {evalAmt != null && ` · 평가 ${Number(evalAmt).toLocaleString()}원`}
-                              </div>
-                            </div>
-                            <button className="btn primary" style={{ fontSize: 12, padding: '4px 12px', flexShrink: 0 }}
-                              onClick={() => importTossHolding(item)}>추가</button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )
-                })()}
-
-                {/* 원시 JSON (디버그용 — 필드 파악 전 임시) */}
-                <details style={{ marginTop: 16 }}>
-                  <summary style={{ fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer' }}>원시 응답 보기</summary>
-                  <pre style={{ fontSize: 10, background: 'var(--bg)', padding: 10, borderRadius: 6, overflow: 'auto', maxHeight: 200, marginTop: 8 }}>
-                    {JSON.stringify(tossHoldings, null, 2)}
-                  </pre>
-                </details>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
