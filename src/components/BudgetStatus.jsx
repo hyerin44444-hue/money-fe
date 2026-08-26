@@ -3,12 +3,14 @@ import { getBudgets, getCategories } from '../api/client'
 
 export default function BudgetStatus({ transactions }) {
   const [budgets, setBudgets] = useState([])
+  const [categories, setCategories] = useState([])
   const [categoryOrder, setCategoryOrder] = useState({})
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [checkedCategories, setCheckedCategories] = useState({})
 
   useEffect(() => {
     Promise.all([getBudgets(), getCategories()]).then(([budRes, catRes]) => {
+      setCategories(catRes.data)
       const orderMap = {}
       catRes.data.forEach((c) => { orderMap[c.name] = c.sort_order ?? 0 })
       setCategoryOrder(orderMap)
@@ -30,8 +32,12 @@ export default function BudgetStatus({ transactions }) {
 
   const expenseTransactions = transactions.filter((t) => t.type === 'expense')
 
+  // 하위 카테고리 지출은 상위 카테고리로 귀속
+  const effectiveCat = (catName) => categories.find((c) => c.name === catName)?.parent || catName
+
   const spentByCategory = expenseTransactions.reduce((acc, t) => {
-    acc[t.category] = (acc[t.category] || 0) + Number(t.amount)
+    const eff = effectiveCat(t.category)
+    acc[eff] = (acc[eff] || 0) + Number(t.amount)
     return acc
   }, {})
 
@@ -61,7 +67,7 @@ export default function BudgetStatus({ transactions }) {
 
   const categoryTransactions = selectedCategory
     ? expenseTransactions
-        .filter((t) => t.category === selectedCategory)
+        .filter((t) => effectiveCat(t.category) === selectedCategory)
         .sort((a, b) => b.date.localeCompare(a.date))
     : []
 
@@ -192,6 +198,9 @@ export default function BudgetStatus({ transactions }) {
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
                           {t.date}
+                          {effectiveCat(t.category) !== t.category && (
+                            <span style={{ marginLeft: 6, color: 'var(--accent)' }}>{t.category}</span>
+                          )}
                         </div>
                       </div>
                       <div style={{ fontSize: 14, fontWeight: 600, color: '#ef4444', whiteSpace: 'nowrap' }}>
