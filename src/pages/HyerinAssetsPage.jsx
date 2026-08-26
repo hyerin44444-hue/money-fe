@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
 import {
   getHyerinSavings, addHyerinSavings, deleteHyerinSavings,
-  getHyerinStocks, createHyerinStock, updateHyerinStock, deleteHyerinStock,
+  getHyerinStocks, getHyerinStockPrices, createHyerinStock, updateHyerinStock, deleteHyerinStock,
   getHyerinCash, createHyerinCash, updateHyerinCash, deleteHyerinCash,
   getHyerinGold, createHyerinGold, updateHyerinGold, deleteHyerinGold,
   getGoldPrice,
@@ -19,6 +19,8 @@ const profitColor = (v) => v == null ? 'var(--text-muted)' : v >= 0 ? 'var(--sto
 export default function HyerinAssetsPage() {
   const [savings, setSavings] = useState([])
   const [stocks, setStocks] = useState([])
+  const [priceMap, setPriceMap] = useState({})
+  const [pricesLoading, setPricesLoading] = useState(false)
   const [cashList, setCashList] = useState([])
   const [goldList, setGoldList] = useState([])
   const [goldPrice, setGoldPrice] = useState(null)
@@ -61,10 +63,24 @@ export default function HyerinAssetsPage() {
     }
   }
 
-  useEffect(() => { fetchAll() }, [])
+  const fetchPrices = async () => {
+    setPricesLoading(true)
+    try {
+      const res = await getHyerinStockPrices()
+      const map = {}
+      res.data.forEach(p => { map[p.id] = p })
+      setPriceMap(map)
+    } finally {
+      setPricesLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchAll().then(fetchPrices).then(fetchPrices) }, [])
+
+  const enriched = stocks.map(st => ({ ...st, ...(priceMap[st.id] || {}) }))
 
   const savingsTotal = savings.reduce((s, g) => s + g.total, 0)
-  const stocksTotal = stocks.reduce((s, st) => s + (st.current_value || 0), 0)
+  const stocksTotal = enriched.reduce((s, st) => s + (st.current_value || st.purchase_value || 0), 0)
   const cashTotal = cashList.reduce((s, c) => s + Number(c.amount), 0)
   const goldTotal = goldPrice
     ? goldList.reduce((s, g) => s + g.grams * goldPrice.sell_per_gram, 0)
@@ -74,11 +90,11 @@ export default function HyerinAssetsPage() {
   const handleSavSubmit = async (e) => {
     e.preventDefault()
     await addHyerinSavings({ ...savForm, amount: parseFloat(savForm.amount) })
-    setSavForm(EMPTY_SAV); setShowSavForm(false); fetchAll()
+    setSavForm(EMPTY_SAV); setShowSavForm(false); fetchAll().then(fetchPrices)
   }
   const handleSavDelete = async (id) => {
     if (!confirm('삭제하시겠습니까?')) return
-    await deleteHyerinSavings(id); fetchAll()
+    await deleteHyerinSavings(id); fetchAll().then(fetchPrices)
   }
 
   const handleStockSubmit = async (e) => {
@@ -86,7 +102,7 @@ export default function HyerinAssetsPage() {
     const data = { ...stockForm, quantity: parseFloat(stockForm.quantity), avg_price: parseFloat(stockForm.avg_price) }
     if (stockEditId) await updateHyerinStock(stockEditId, data)
     else await createHyerinStock(data)
-    setStockForm(EMPTY_STOCK); setStockEditId(null); setShowStockForm(false); fetchAll()
+    setStockForm(EMPTY_STOCK); setStockEditId(null); setShowStockForm(false); fetchAll().then(fetchPrices)
   }
   const handleStockEdit = (st) => {
     setStockForm({ name: st.name, ticker: st.ticker, quantity: String(st.quantity), avg_price: String(st.avg_price), account_type: st.account_type || '' })
@@ -94,7 +110,7 @@ export default function HyerinAssetsPage() {
   }
   const handleStockDelete = async (id) => {
     if (!confirm('삭제하시겠습니까?')) return
-    await deleteHyerinStock(id); fetchAll()
+    await deleteHyerinStock(id); fetchAll().then(fetchPrices)
   }
 
   const handleCashSubmit = async (e) => {
@@ -102,7 +118,7 @@ export default function HyerinAssetsPage() {
     const data = { ...cashForm, amount: parseFloat(cashForm.amount) }
     if (cashEditId) await updateHyerinCash(cashEditId, data)
     else await createHyerinCash(data)
-    setCashForm(EMPTY_CASH); setCashEditId(null); setShowCashForm(false); fetchAll()
+    setCashForm(EMPTY_CASH); setCashEditId(null); setShowCashForm(false); fetchAll().then(fetchPrices)
   }
   const handleCashEdit = (c) => {
     setCashForm({ category: c.category, amount: String(c.amount), note: c.note || '', date: c.date })
@@ -110,7 +126,7 @@ export default function HyerinAssetsPage() {
   }
   const handleCashDelete = async (id) => {
     if (!confirm('삭제하시겠습니까?')) return
-    await deleteHyerinCash(id); fetchAll()
+    await deleteHyerinCash(id); fetchAll().then(fetchPrices)
   }
 
   const handleGoldSubmit = async (e) => {
@@ -118,7 +134,7 @@ export default function HyerinAssetsPage() {
     const data = { ...goldForm, grams: parseFloat(goldForm.grams), buy_price_per_gram: parseFloat(goldForm.buy_price_per_gram) / 3.75 }
     if (goldEditId) await updateHyerinGold(goldEditId, data)
     else await createHyerinGold(data)
-    setGoldForm(EMPTY_GOLD); setGoldEditId(null); setShowGoldForm(false); fetchAll()
+    setGoldForm(EMPTY_GOLD); setGoldEditId(null); setShowGoldForm(false); fetchAll().then(fetchPrices)
   }
   const handleGoldEdit = (g) => {
     setGoldForm({ grams: String(g.grams), buy_price_per_gram: String(Math.round(g.buy_price_per_gram * 3.75)), note: g.note || '', date: g.date })
@@ -126,7 +142,7 @@ export default function HyerinAssetsPage() {
   }
   const handleGoldDelete = async (id) => {
     if (!confirm('삭제하시겠습니까?')) return
-    await deleteHyerinGold(id); fetchAll()
+    await deleteHyerinGold(id); fetchAll().then(fetchPrices)
   }
 
   const assets = [
@@ -222,7 +238,7 @@ export default function HyerinAssetsPage() {
           )}
 
           {/* 주식 목록 */}
-          {label === '주식' && stocks.map((st) => {
+          {label === '주식' && enriched.map((st) => {
             const isUp = st.profit != null && st.profit >= 0
             return (
               <div key={st.id} style={{ background: 'var(--bg)', borderRadius: 8, padding: '10px 12px', marginBottom: 6 }}>
@@ -242,7 +258,7 @@ export default function HyerinAssetsPage() {
                     { label: '수량', value: st.quantity },
                     { label: '평균단가', value: st.currency === 'USD' ? `$${st.avg_price}` : fmt(st.avg_price) },
                     { label: '투자금액', value: fmt(Math.round(st.purchase_value)) },
-                    { label: '평가금액', value: st.current_value != null ? fmt(Math.round(st.current_value)) : '-' },
+                    { label: '평가금액', value: pricesLoading && st.current_value == null ? '조회 중...' : st.current_value != null ? fmt(Math.round(st.current_value)) : '-' },
                   ].map(({ label: l, value: v }) => (
                     <div key={l} style={{ background: 'var(--surface)', borderRadius: 6, padding: '6px 8px', textAlign: 'center' }}>
                       <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>{l}</div>

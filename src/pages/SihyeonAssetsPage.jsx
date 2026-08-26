@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
 import {
   getSihyeonSavings, addSihyeonSavings, deleteSihyeonSavings,
-  getSihyeonStocks, createSihyeonStock, updateSihyeonStock, deleteSihyeonStock,
+  getSihyeonStocks, getSihyeonStockPrices, createSihyeonStock, updateSihyeonStock, deleteSihyeonStock,
   getSihyeonCash, createSihyeonCash, updateSihyeonCash, deleteSihyeonCash,
   getSihyeonGold, createSihyeonGold, updateSihyeonGold, deleteSihyeonGold,
   getGoldPrice,
@@ -19,6 +19,8 @@ const profitColor = (v) => v == null ? 'var(--text-muted)' : v >= 0 ? 'var(--sto
 export default function SihyeonAssetsPage() {
   const [savings, setSavings] = useState([])
   const [stocks, setStocks] = useState([])
+  const [priceMap, setPriceMap] = useState({})
+  const [pricesLoading, setPricesLoading] = useState(false)
   const [cashList, setCashList] = useState([])
   const [goldList, setGoldList] = useState([])
   const [goldPrice, setGoldPrice] = useState(null)
@@ -66,10 +68,24 @@ export default function SihyeonAssetsPage() {
     }
   }
 
-  useEffect(() => { fetchAll() }, [])
+  const fetchPrices = async () => {
+    setPricesLoading(true)
+    try {
+      const res = await getSihyeonStockPrices()
+      const map = {}
+      res.data.forEach(p => { map[p.id] = p })
+      setPriceMap(map)
+    } finally {
+      setPricesLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchAll().then(fetchPrices).then(fetchPrices) }, [])
+
+  const enriched = stocks.map(st => ({ ...st, ...(priceMap[st.id] || {}) }))
 
   const savingsTotal = savings.reduce((s, g) => s + g.total, 0)
-  const stocksTotal = stocks.reduce((s, st) => s + (st.current_value || 0), 0)
+  const stocksTotal = enriched.reduce((s, st) => s + (st.current_value || st.purchase_value || 0), 0)
   const cashTotal = cashList.reduce((s, c) => s + Number(c.amount), 0)
   const goldTotal = goldPrice
     ? goldList.reduce((s, g) => s + g.grams * goldPrice.sell_per_gram, 0)
@@ -80,11 +96,11 @@ export default function SihyeonAssetsPage() {
   const handleSavSubmit = async (e) => {
     e.preventDefault()
     await addSihyeonSavings({ ...savForm, amount: parseFloat(savForm.amount) })
-    setSavForm(EMPTY_SAV); setShowSavForm(false); fetchAll()
+    setSavForm(EMPTY_SAV); setShowSavForm(false); fetchAll().then(fetchPrices)
   }
   const handleSavDelete = async (id) => {
     if (!confirm('삭제하시겠습니까?')) return
-    await deleteSihyeonSavings(id); fetchAll()
+    await deleteSihyeonSavings(id); fetchAll().then(fetchPrices)
   }
 
   // ── 주식 핸들러
@@ -93,7 +109,7 @@ export default function SihyeonAssetsPage() {
     const data = { ...stockForm, quantity: parseFloat(stockForm.quantity), avg_price: parseFloat(stockForm.avg_price) }
     if (stockEditId) await updateSihyeonStock(stockEditId, data)
     else await createSihyeonStock(data)
-    setStockForm(EMPTY_STOCK); setStockEditId(null); setShowStockForm(false); fetchAll()
+    setStockForm(EMPTY_STOCK); setStockEditId(null); setShowStockForm(false); fetchAll().then(fetchPrices)
   }
   const handleStockEdit = (st) => {
     setStockForm({ name: st.name, ticker: st.ticker, quantity: String(st.quantity), avg_price: String(st.avg_price), account_type: st.account_type || '' })
@@ -101,7 +117,7 @@ export default function SihyeonAssetsPage() {
   }
   const handleStockDelete = async (id) => {
     if (!confirm('삭제하시겠습니까?')) return
-    await deleteSihyeonStock(id); fetchAll()
+    await deleteSihyeonStock(id); fetchAll().then(fetchPrices)
   }
 
   // ── 현금 핸들러
@@ -110,7 +126,7 @@ export default function SihyeonAssetsPage() {
     const data = { ...cashForm, amount: parseFloat(cashForm.amount) }
     if (cashEditId) await updateSihyeonCash(cashEditId, data)
     else await createSihyeonCash(data)
-    setCashForm(EMPTY_CASH); setCashEditId(null); setShowCashForm(false); fetchAll()
+    setCashForm(EMPTY_CASH); setCashEditId(null); setShowCashForm(false); fetchAll().then(fetchPrices)
   }
   const handleCashEdit = (c) => {
     setCashForm({ category: c.category, amount: String(c.amount), note: c.note || '', date: c.date })
@@ -118,7 +134,7 @@ export default function SihyeonAssetsPage() {
   }
   const handleCashDelete = async (id) => {
     if (!confirm('삭제하시겠습니까?')) return
-    await deleteSihyeonCash(id); fetchAll()
+    await deleteSihyeonCash(id); fetchAll().then(fetchPrices)
   }
 
   // ── 금 핸들러
@@ -127,7 +143,7 @@ export default function SihyeonAssetsPage() {
     const data = { ...goldForm, grams: parseFloat(goldForm.grams), buy_price_per_gram: parseFloat(goldForm.buy_price_per_gram) / 3.75 }
     if (goldEditId) await updateSihyeonGold(goldEditId, data)
     else await createSihyeonGold(data)
-    setGoldForm(EMPTY_GOLD); setGoldEditId(null); setShowGoldForm(false); fetchAll()
+    setGoldForm(EMPTY_GOLD); setGoldEditId(null); setShowGoldForm(false); fetchAll().then(fetchPrices)
   }
   const handleGoldEdit = (g) => {
     setGoldForm({ grams: String(g.grams), buy_price_per_gram: String(Math.round(g.buy_price_per_gram * 3.75)), note: g.note || '', date: g.date })
@@ -135,7 +151,7 @@ export default function SihyeonAssetsPage() {
   }
   const handleGoldDelete = async (id) => {
     if (!confirm('삭제하시겠습니까?')) return
-    await deleteSihyeonGold(id); fetchAll()
+    await deleteSihyeonGold(id); fetchAll().then(fetchPrices)
   }
 
   const assets = [
@@ -231,7 +247,7 @@ export default function SihyeonAssetsPage() {
           )}
 
           {/* ── 주식 목록 */}
-          {label === '주식' && stocks.map((st) => {
+          {label === '주식' && enriched.map((st) => {
             const isUp = st.profit != null && st.profit >= 0
             return (
               <div key={st.id} style={{ background: 'var(--bg)', borderRadius: 8, padding: '10px 12px', marginBottom: 6 }}>
@@ -251,7 +267,7 @@ export default function SihyeonAssetsPage() {
                     { label: '수량', value: st.quantity },
                     { label: '평균단가', value: st.currency === 'USD' ? `$${st.avg_price}` : fmt(st.avg_price) },
                     { label: '투자금액', value: fmt(Math.round(st.purchase_value)) },
-                    { label: '평가금액', value: st.current_value != null ? fmt(Math.round(st.current_value)) : '-' },
+                    { label: '평가금액', value: pricesLoading && st.current_value == null ? '조회 중...' : st.current_value != null ? fmt(Math.round(st.current_value)) : '-' },
                   ].map(({ label: l, value: v }) => (
                     <div key={l} style={{ background: 'var(--surface)', borderRadius: 6, padding: '6px 8px', textAlign: 'center' }}>
                       <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>{l}</div>
