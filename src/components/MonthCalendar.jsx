@@ -63,7 +63,9 @@ export default function MonthCalendar({ year, month, transactions, filterCategor
 
   const categories = ['전체', ...Array.from(new Set(transactions.map((t) => t.category))).sort()]
 
-  const filtered = filterCategory === '전체' ? transactions : transactions.filter((t) => t.category === filterCategory)
+  const filtered = isControlled
+    ? transactions
+    : filterCategory === '전체' ? transactions : transactions.filter((t) => t.category === filterCategory)
 
   const totalIncome = filtered.reduce((s, t) => t.type === 'income' ? s + Number(t.amount) : s, 0)
   const totalExpense = filtered.reduce((s, t) => t.type === 'expense' ? s + Number(t.amount) : s, 0)
