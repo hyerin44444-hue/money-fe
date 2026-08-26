@@ -14,7 +14,9 @@ export default function BudgetStatus({ transactions }) {
       const orderMap = {}
       catRes.data.forEach((c) => { orderMap[c.name] = c.sort_order ?? 0 })
       setCategoryOrder(orderMap)
+      const catNames = new Set(catRes.data.map((c) => c.name))
       const sortedBudgets = budRes.data
+        .filter((b) => catNames.has(b.category))
         .slice()
         .sort((a, b) => (orderMap[a.category] ?? 0) - (orderMap[b.category] ?? 0))
       setBudgets(sortedBudgets)
