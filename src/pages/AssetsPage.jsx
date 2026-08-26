@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getSavings, getStocks, getCash, createCash, updateCash, deleteCash, getGoldPrice, getGold, createGold, updateGold, deleteGold } from '../api/client'
+import { getSavings, getStocks, getStockPrices, getCash, createCash, updateCash, deleteCash, getGoldPrice, getGold, createGold, updateGold, deleteGold } from '../api/client'
 import dayjs from 'dayjs'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
@@ -55,19 +55,29 @@ export default function AssetsPage() {
   const [goldEditId, setGoldEditId] = useState(null)
   const [goldSubmitting, setGoldSubmitting] = useState(false)
 
+  const fetchStockPrices = async (savData, cashData) => {
+    try {
+      const pricesRes = await getStockPrices()
+      const stTotal = pricesRes.data.reduce((s, st) => s + (st.current_value || 0), 0)
+      setStocksTotal(stTotal)
+      setTrend(buildTrend(savData, cashData, stTotal))
+    } catch (e) {}
+  }
+
   const fetchAll = async () => {
     setLoading(true)
     try {
       const [savRes, stRes, cashRes, goldRes, goldPriceRes] = await Promise.all([
         getSavings(), getStocks(), getCash(), getGold(), getGoldPrice().catch(() => ({ data: null }))
       ])
-      const stTotal = stRes.data.reduce((s, st) => s + (st.current_value || 0), 0)
+      const stTotal = stRes.data.reduce((s, st) => s + (st.purchase_value || 0), 0)
       setSavingsTotal(savRes.data.reduce((s, g) => s + (g.non_stock_total ?? g.total), 0))
       setStocksTotal(stTotal)
       setCashList(cashRes.data)
       setGoldList(goldRes.data)
       setGoldPrice(goldPriceRes.data)
       setTrend(buildTrend(savRes.data, cashRes.data, stTotal))
+      fetchStockPrices(savRes.data, cashRes.data)
     } finally {
       setLoading(false)
     }
