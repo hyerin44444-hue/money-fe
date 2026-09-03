@@ -7,6 +7,7 @@ import BudgetStatus from '../components/BudgetStatus'
 import MonthlyOverview from '../components/MonthlyOverview'
 import MonthMemo from '../components/MonthMemo'
 import { getMatchSet } from '../utils/categoryUtils'
+import { getFixedExpenses } from '../api/client'
 
 export default function DashboardPage() {
   const today = dayjs()
@@ -14,9 +15,15 @@ export default function DashboardPage() {
   const [month, setMonth] = useState(today.month() + 1)
   const [selectedParent, setSelectedParent] = useState('전체')
   const [selectedSub, setSelectedSub] = useState(null)
-  const [irregularFilter, setIrregularFilter] = useState('all') // 'all' | 'irregular' | 'regular'
+  const [irregularFilter, setIrregularFilter] = useState('all')
+  const [fixedFilter, setFixedFilter] = useState('all')
+  const [fixedNames, setFixedNames] = useState(new Set())
 
-  useEffect(() => { setSelectedParent('전체'); setSelectedSub(null); setIrregularFilter('all') }, [year, month])
+  useEffect(() => { setSelectedParent('전체'); setSelectedSub(null); setIrregularFilter('all'); setFixedFilter('all') }, [year, month])
+
+  useEffect(() => {
+    getFixedExpenses().then((res) => setFixedNames(new Set(res.data.map((f) => f.name))))
+  }, [])
 
   const {
     transactions, summary, categories,
@@ -81,6 +88,7 @@ export default function DashboardPage() {
 
         const calendarTx = transactions
           .filter((t) => irregularFilter === 'all' ? true : irregularFilter === 'irregular' ? t.is_irregular : !t.is_irregular)
+          .filter((t) => fixedFilter === 'all' ? true : fixedFilter === 'fixed' ? fixedNames.has(t.note) : !fixedNames.has(t.note))
           .filter((t) => !activeFilter || activeFilter.has(t.category))
 
         const filterLabel = selectedSub || selectedParent
@@ -133,6 +141,22 @@ export default function DashboardPage() {
                         background: irregularFilter === val ? '#ea580c' : '#fff7ed',
                         color: irregularFilter === val ? '#fff' : '#ea580c',
                         outline: '1.5px solid #ea580c' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 고정비 필터 */}
+              <div>
+                <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>고정비 여부</p>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {[['all', '전체'], ['fixed', '포함'], ['nonfixed', '미포함']].map(([val, label]) => (
+                    <button key={val} onClick={() => setFixedFilter(val)}
+                      style={{ padding: '4px 12px', fontSize: 12, borderRadius: 99, border: 'none', cursor: 'pointer', fontWeight: 600,
+                        background: fixedFilter === val ? '#7c3aed' : '#ede9fe',
+                        color: fixedFilter === val ? '#fff' : '#7c3aed',
+                        outline: '1.5px solid #7c3aed' }}>
                       {label}
                     </button>
                   ))}

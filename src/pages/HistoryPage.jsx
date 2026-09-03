@@ -15,6 +15,7 @@ export default function HistoryPage() {
   const [selectedParent, setSelectedParent] = useState('전체')
   const [selectedSub, setSelectedSub] = useState(null)
   const [irregularFilter, setIrregularFilter] = useState('all')
+  const [fixedFilter, setFixedFilter] = useState('all')
   const [fixedList, setFixedList] = useState([])
   const [showApplyModal, setShowApplyModal] = useState(false)
   const [checkedIds, setCheckedIds] = useState(new Set())
@@ -63,6 +64,7 @@ export default function HistoryPage() {
   const filtered = transactions
     .filter((t) => !activeFilter || activeFilter.has(t.category))
     .filter((t) => irregularFilter === 'all' ? true : irregularFilter === 'irregular' ? t.is_irregular : !t.is_irregular)
+    .filter((t) => fixedFilter === 'all' ? true : fixedFilter === 'fixed' ? fixedNames.has(t.note) : !fixedNames.has(t.note))
 
   const totalIncome  = filtered.filter((t) => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const totalExpense = filtered.filter((t) => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
@@ -188,6 +190,22 @@ export default function HistoryPage() {
                   background: irregularFilter === val ? '#ea580c' : '#fff7ed',
                   color: irregularFilter === val ? '#fff' : '#ea580c',
                   outline: '1.5px solid #ea580c' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 고정비 필터 */}
+        <div>
+          <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>고정비 여부</p>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[['all', '전체'], ['fixed', '포함'], ['nonfixed', '미포함']].map(([val, label]) => (
+              <button key={val} onClick={() => setFixedFilter(val)}
+                style={{ padding: '4px 12px', fontSize: 12, borderRadius: 99, border: 'none', cursor: 'pointer', fontWeight: 600,
+                  background: fixedFilter === val ? '#7c3aed' : '#ede9fe',
+                  color: fixedFilter === val ? '#fff' : '#7c3aed',
+                  outline: '1.5px solid #7c3aed' }}>
                 {label}
               </button>
             ))}
