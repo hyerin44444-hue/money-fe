@@ -104,6 +104,43 @@ export default function SavingsCard() {
         <p className="savings-empty">등록된 적금이 없습니다. 입금 버튼을 눌러 추가하세요.</p>
       )}
 
+      {/* 적금 이름별 누적 현황 */}
+      {savings.length > 0 && (() => {
+        const COLORS = ['#4f86f7','#22c55e','#f59e0b','#ec4899','#8b5cf6','#14b8a6','#f97316','#64748b']
+        const colorMap = Object.fromEntries(savings.map((g, i) => [g.name, COLORS[i % COLORS.length]]))
+        return (
+        <div style={{ marginBottom: 16, padding: 14, background: 'var(--bg)', borderRadius: 12, border: '1px solid var(--border)' }}>
+          <span style={{ fontWeight: 700, fontSize: 14 }}>📊 적금별 누적 현황</span>
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {savings
+              .slice().sort((a, b) => b.total - a.total)
+              .map((g) => {
+                const pct = grandTotal > 0 ? (g.total / grandTotal) * 100 : 0
+                const color = colorMap[g.name]
+                return (
+                  <div key={g.name}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>{g.name}</span>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{pct.toFixed(1)}%</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color }}>{fmt(g.total)}</span>
+                      </div>
+                    </div>
+                    <div style={{ height: 8, background: 'var(--border)', borderRadius: 99, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99, transition: 'width 0.4s ease' }} />
+                    </div>
+                  </div>
+                )
+              })}
+          </div>
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+            <span style={{ color: 'var(--text-muted)' }}>합계</span>
+            <span style={{ fontWeight: 800 }}>{fmt(grandTotal)}</span>
+          </div>
+        </div>
+        )
+      })()}
+
       <div style={{ marginBottom: 20, padding: 14, background: 'var(--bg)', borderRadius: 12, border: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <span style={{ fontWeight: 700, fontSize: 14 }}>🎯 {THIS_YEAR}년 달성 현황</span>
