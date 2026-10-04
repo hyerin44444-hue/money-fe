@@ -21,6 +21,7 @@ export default function StocksPage() {
   const [addQty, setAddQty] = useState('')
   const [addPrice, setAddPrice] = useState('')
   const [monthlyAdd, setMonthlyAdd] = useState({ nasdaq: '', sp500: '', other: '' })
+  const [monthlyMonths, setMonthlyMonths] = useState({ nasdaq: '', sp500: '', other: '' })
   const [projTab, setProjTab] = useState('합계')
 
   const fetchStocks = async () => {
@@ -409,13 +410,15 @@ export default function StocksPage() {
         const otherStocks = tabPool.filter((st) => !isNasdaq(st) && !isSP500(st))
         const otherTotal  = otherStocks.reduce((s, st) => s + (st.current_value || 0), 0)
 
-        const calcProjected = (base, annualRate, years, monthlyPmt) => {
+        const calcProjected = (base, annualRate, years, monthlyPmt, contributionMonths) => {
           const r = annualRate / 100
           const fv = base * Math.pow(1 + r, years)
           if (!monthlyPmt) return fv
           const mr = Math.pow(1 + r, 1 / 12) - 1
-          const months = years * 12
-          return fv + monthlyPmt * ((Math.pow(1 + mr, months) - 1) / mr)
+          const totalMonths = years * 12
+          const cm = contributionMonths > 0 ? Math.min(contributionMonths, totalMonths) : totalMonths
+          const fvAnnuity = monthlyPmt * ((Math.pow(1 + mr, cm) - 1) / mr)
+          return fv + fvAnnuity * Math.pow(1 + mr, totalMonths - cm)
         }
 
         return (
@@ -467,9 +470,10 @@ export default function StocksPage() {
             {/* 수익률 예상 테이블 */}
             {groups.length > 0 && (
               <>
-                <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-muted)' }}>보유 종목 현재 평가금액 기준 · 연 복리 · 추가 납입 없음</p>
+                <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-muted)' }}>보유 종목 현재 평가금액 기준 · 연 복리</p>
                 {groups.map(({ label, color, base, items, key }) => {
                   const pmt = parseFloat(monthlyAdd[key]) * 10000 || 0
+                  const cm = parseInt(monthlyMonths[key]) || 0
                   return (
                   <div key={label} style={{ marginBottom: 24 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
@@ -477,17 +481,22 @@ export default function StocksPage() {
                       <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                         {items.map((st) => st.name).join(', ')} · 기준 {fmtBig(base)}원
                       </span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>월 추가납입</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>월</span>
                         <input
-                          type="number"
-                          min="0"
-                          placeholder="0"
+                          type="number" min="0" placeholder="0"
                           value={monthlyAdd[key]}
                           onChange={(e) => setMonthlyAdd((prev) => ({ ...prev, [key]: e.target.value }))}
-                          style={{ width: 80, padding: '3px 8px', fontSize: 12, border: '1px solid var(--border)', borderRadius: 6, textAlign: 'right', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                          style={{ width: 70, padding: '3px 8px', fontSize: 12, border: '1px solid var(--border)', borderRadius: 6, textAlign: 'right', background: 'var(--bg)', color: 'var(--text-primary)' }}
                         />
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>만원</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>만원 ×</span>
+                        <input
+                          type="number" min="1" placeholder="개월"
+                          value={monthlyMonths[key]}
+                          onChange={(e) => setMonthlyMonths((prev) => ({ ...prev, [key]: e.target.value }))}
+                          style={{ width: 60, padding: '3px 8px', fontSize: 12, border: '1px solid var(--border)', borderRadius: 6, textAlign: 'right', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                        />
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>개월</span>
                       </div>
                     </div>
                     <div style={{ overflowX: 'auto' }}>
@@ -506,7 +515,7 @@ export default function StocksPage() {
                               <td style={{ padding: '8px 10px', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{y}년 후</td>
                               {RATES.map((r) => (
                                 <td key={r} style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                                  {fmtBig(calcProjected(base, r, y, pmt))}원
+                                  {fmtBig(calcProjected(base, r, y, pmt, cm))}원
                                 </td>
                               ))}
                             </tr>
@@ -523,6 +532,7 @@ export default function StocksPage() {
             {/* 나스닥/S&P 외 기타 종목 */}
             {otherStocks.length > 0 && (() => {
               const pmt = parseFloat(monthlyAdd.other) * 10000 || 0
+              const cm = parseInt(monthlyMonths.other) || 0
               return (
                 <div style={{ marginTop: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
@@ -530,17 +540,22 @@ export default function StocksPage() {
                     <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                       {otherStocks.map((st) => st.name).join(', ')} · 기준 {fmtBig(otherTotal)}원
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>월 추가납입</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>월</span>
                       <input
-                        type="number"
-                        min="0"
-                        placeholder="0"
+                        type="number" min="0" placeholder="0"
                         value={monthlyAdd.other}
                         onChange={(e) => setMonthlyAdd((prev) => ({ ...prev, other: e.target.value }))}
-                        style={{ width: 80, padding: '3px 8px', fontSize: 12, border: '1px solid var(--border)', borderRadius: 6, textAlign: 'right', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                        style={{ width: 70, padding: '3px 8px', fontSize: 12, border: '1px solid var(--border)', borderRadius: 6, textAlign: 'right', background: 'var(--bg)', color: 'var(--text-primary)' }}
                       />
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>만원</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>만원 ×</span>
+                      <input
+                        type="number" min="1" placeholder="개월"
+                        value={monthlyMonths.other}
+                        onChange={(e) => setMonthlyMonths((prev) => ({ ...prev, other: e.target.value }))}
+                        style={{ width: 60, padding: '3px 8px', fontSize: 12, border: '1px solid var(--border)', borderRadius: 6, textAlign: 'right', background: 'var(--bg)', color: 'var(--text-primary)' }}
+                      />
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>개월</span>
                     </div>
                   </div>
                   <div style={{ overflowX: 'auto' }}>
@@ -559,7 +574,7 @@ export default function StocksPage() {
                             <td style={{ padding: '8px 10px', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{y}년 후</td>
                             {RATES.map((r) => (
                               <td key={r} style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                                {fmtBig(calcProjected(otherTotal, r, y, pmt))}원
+                                {fmtBig(calcProjected(otherTotal, r, y, pmt, cm))}원
                               </td>
                             ))}
                           </tr>
